@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f1923" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Controle de Estoque" />
+  <title>Controle de Estoque</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0f14;
+      --surface: #111820;
+      --surface2: #1a2330;
+      --border: #1e2d3d;
+      --accent: #00d4ff;
+      --accent2: #ff6b35;
+      --text: #e8f0f7;
+      --text-muted: #5a7a94;
+      --success: #00e676;
+      --error: #ff4444;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,15,20,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .app-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+    .app-title span { color: var(--accent); }
+    .app-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .tab-bar { display: flex; gap: 4px; background: var(--surface); border-radius: 8px; padding: 3px; }
+    .tab-btn {
+      background: none; border: none; color: var(--text-muted);
+      font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
+    }
+    .tab-btn.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+    main { flex: 1; position: relative; z-index: 1; overflow: hidden; }
+    .view { display: none; padding: 24px 20px; animation: fadeIn 0.25s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* FORM CARD */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px 20px;
+      position: relative; overflow: hidden;
+    }
+    .form-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .form-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.01em; }
+    .form-grid { display: grid; gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+
+    /* Custom select / dropdown */
+    .custom-select {
+      position: relative;
+    }
+    .select-trigger {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 40px 12px 14px; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 14px;
+      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: space-between;
+      user-select: none; min-height: 46px;
+    }
+    .select-trigger.placeholder { color: rgba(90,122,148,0.6); }
+    .select-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+    .select-trigger svg { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); transition: transform 0.2s; pointer-events: none; }
+    .select-trigger.open svg { transform: translateY(-50%) rotate(180deg); }
+
+    .dropdown-panel {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: var(--surface2); border: 1px solid var(--accent);
+      border-radius: 10px; z-index: 200; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      display: none; flex-direction: column;
+      max-height: 300px;
+    }
+    .dropdown-panel.open { display: flex; animation: fadeIn 0.15s ease; }
+
+    .dropdown-search {
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .dropdown-search input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 12px; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+    }
+    .dropdown-search input:focus { border-color: var(--accent); }
+    .dropdown-search input::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+    .dropdown-list { overflow-y: auto; flex: 1; }
+    .dropdown-list::-webkit-scrollbar { width: 4px; }
+    .dropdown-list::-webkit-scrollbar-track { background: transparent; }
+    .dropdown-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .dropdown-group-label {
+      padding: 8px 14px 4px;
+      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--accent); font-weight: 700; background: rgba(0,212,255,0.05);
+      border-top: 1px solid var(--border); position: sticky; top: 0;
+    }
+    .dropdown-group-label:first-child { border-top: none; }
+
+    .dropdown-option {
+      padding: 11px 14px; font-size: 13px; cursor: pointer;
+      transition: background 0.15s; color: var(--text);
+    }
+    .dropdown-option:hover { background: rgba(0,212,255,0.08); color: var(--accent); }
+    .dropdown-option.selected { color: var(--accent); font-weight: 500; }
+    .dropdown-option.hidden { display: none; }
+
+    /* regular input */
+    .field input[type="text"], .field input[type="number"] {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; width: 100%;
+    }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+    .field input::placeholder { color: var(--text-muted); opacity: 0.5; }
+
+    #total-display {
+      background: rgba(0,212,255,0.06); border-color: rgba(0,212,255,0.2);
+      color: var(--accent); font-weight: 500;
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .btn-submit {
+      margin-top: 20px; width: 100%; padding: 16px;
+      background: var(--accent); color: var(--bg); border: none; border-radius: 10px;
+      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.02em;
+      cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+    }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-submit .btn-text { transition: opacity 0.2s; }
+    .btn-submit.loading .btn-text { opacity: 0; }
+    .spinner { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; }
+    .btn-submit.loading .spinner { display: flex; }
+    .spinner svg { animation: spin 0.8s linear infinite; width: 22px; height: 22px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 20px; font-size: 13px; font-weight: 500;
+      z-index: 999; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--error); color: var(--error); }
+
+    /* HISTORY */
+    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .history-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+    .count-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text-muted); }
+    .btn-clear { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; cursor: pointer; transition: all 0.2s; }
+    .btn-clear:hover { border-color: var(--error); color: var(--error); }
+    .history-list { display: flex; flex-direction: column; gap: 10px; }
+    .history-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; animation: fadeIn 0.2s ease; }
+    .history-item-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .history-item-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+    .history-item-cat { font-size: 10px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+    .history-item-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .history-total { font-size: 18px; font-weight: 500; color: var(--accent); }
+    .history-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { background: var(--surface2); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--text-muted); display: flex; gap: 4px; align-items: center; }
+    .chip strong { color: var(--text); font-weight: 500; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .status-dot.error { background: var(--error); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+    .btn-retry { background: none; border: 1px solid var(--accent2); border-radius: 6px; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 8px; cursor: pointer; margin-top: 6px; }
+    .offline-bar { background: rgba(255,107,53,0.12); border-bottom: 1px solid rgba(255,107,53,0.25); color: var(--accent2); font-size: 11px; text-align: center; padding: 8px; letter-spacing: 0.06em; display: none; position: relative; z-index: 50; }
+    .offline-bar.show { display: block; }
+
+    /* Category pill chips for quick filter */
+    .cat-pills { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
+    .cat-pills::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--surface2);
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
+    }
+    .cat-pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div class="offline-bar" id="offlineBar">⚠ SEM CONEXÃO — dados salvos localmente</div>
+
+<header>
+  <div>
+    <div class="app-title">ESTOQUE<span>.</span></div>
+    <div class="app-sub">Controle de inventário</div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('form')">LANÇAR</button>
+    <button class="tab-btn" onclick="switchTab('history')">HISTÓRICO</button>
+  </div>
+</header>
+
+<main>
+  <!-- FORMULÁRIO -->
+  <div class="view active" id="view-form">
+    <div class="form-card">
+      <div class="form-title">Novo lançamento</div>
+      <div class="form-grid">
+
+        <!-- CATEGORIA -->
+        <div class="field">
+          <label>Categoria</label>
+          <div class="custom-select" id="sel-categoria">
+            <div class="select-trigger placeholder" id="trigger-categoria" onclick="toggleDropdown('categoria')">
+              <span id="label-categoria">Selecione a categoria</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="dropdown-panel" id="panel-categoria">
+              <div class="dropdown-search">
+                <input type="text" placeholder="Buscar categoria..." oninput="filterDropdown('categoria', this.value)" />
+              </div>
+              <div class="dropdown-list" id="list-categoria"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEM -->
+        <div class="field">
+          <label>Item</label>
+          <div class="custom-select" id="sel-item">
+            <div class="select-trigger placeholder" id="trigger-item" onclick="toggleDropdown('item')">
+              <span id="label-item">Selecione o item</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="dropdown-panel" id="panel-item">
+              <div class="dropdown-search">
+                <input type="text" placeholder="Buscar item..." oninput="filterDropdown('item', this.value)" />
+              </div>
+              <div class="dropdown-list" id="list-item">
+                <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEDIDA -->
+        <div class="field">
+          <label>Medida</label>
+          <input id="f-medida" type="text" placeholder="Ex: kg, un, cx" autocomplete="off" />
+        </div>
+
+        <!-- SALÃO + ESTOQUE -->
+        <div class="row-2">
+          <div class="field">
+            <label>Salão</label>
+            <input id="f-salao" type="number" inputmode="decimal" placeholder="0" />
+          </div>
+          <div class="field">
+            <label>Estoque</label>
+            <input id="f-estoque" type="number" inputmode="decimal" placeholder="0" />
+          </div>
+        </div>
+
+        <!-- TOTAL -->
+        <div class="field">
+          <label>Total (automático)</label>
+          <input id="total-display" type="text" readonly placeholder="—" tabindex="-1" />
+        </div>
+      </div>
+
+      <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
+        <span class="btn-text">ENVIAR PARA PLANILHA</span>
+        <span class="spinner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="view" id="view-history">
+    <div class="history-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="history-title">Histórico</span>
+        <span class="count-badge" id="countBadge">0</span>
+      </div>
+      <button class="btn-clear" onclick="clearHistory()">Limpar</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz5zTyHsDJfyt1suF-4YkhYdVfe9MnbxMDESXoetOJzBb3IRWl6B3XNQQ0Mi8JlmvY/exec";
+const STORAGE_KEY = "estoque_history";
+
+const DADOS = {
+  "BEBIDAS": ["COCA COLA LATA","COCA COLA ZERO LATA","GUARANA","GUARANÁ ZERO","AGUA SEM GÁS","AGUA COM GÁS","STELLA 330ML","SPATEN","MATE NATURAL/ LIMÃO","ICE TEA","H2O","H2O LIMONETO","AGUA TONICA","STELLA PURE GOLD","DEL VALLE UVA"],
+  "COZINHA": ["MASSA DE PASTEL 37","CATUPIRY","QUEIJO MINAS","QUEIJO PARMESÃO","FARINHA PANKO","FARINHA DE TRIGO","AZEITE EXTRA VIRGEM","AZEITE MISTO","Farinha de Rosca","OLEO SOJA","MUÇARELA","MOLHO DE TOMATE","VINHO BRANCO","MOLHO INGLES","AZEITONA VERDE FAT","PAPRICA MISTURADA","PAPRICA PICANTE","PAPRICA DOCE","AÇAFRÃO","LEITE DE COCO","AZEITE DE DENDÊ","ARROZ PARBOILIZADO","SAL","ERVILHA","PIMENTA DO REINO","ERVAS FINAS","MEL","MOSTARDA AMARELA","KETCHUP 3,2kg","CHAMPIGNON","ALCAPARRAS","AZEITONA PRETA FAT","CREME DE LEITE 1LT 17%","FARINHA DE MANDIOCA","MANTEIGA SEM SAL","MAIONESE 2,8","CALDO DE GALINHA","COLORAL","BATATA FRITA 7MM","DOMEQ OU PRESIDENT","VINAGRE ALCOOL","LEITE","BICABORNATO","PALMITO 2kg","AÇUCAR","BACON FATIADO","PÃO DE BURGUER","LEITE CONDENSADO","SPAGUETTI GRAN DURO","CAFÉ"],
+  "DESCARTAVEL": ["GUARDANAPO SACHET","PAPEL TOALHA","COPO DESCARTAVEL","CANUDO","CAIXA DE LUVA G","SAL SACHET","SACO DE TALHER KRAFT","TOUCA DE COZINHA","GARFO DE MADEIRA","SACO VIAGEM KRAFT","FILME PVC","BOBINA IMPRESSORA","POTE PRAFESTA 1500","POTE PRAFESTA 500ml","POTE MOLHO C/TAMPA 30ML","ETIQUETA DE VALIDADE","BOBINA 20X30","BOBINA 30X40","BOBINA 40X60","saco vacuo 20x30","POTE 75 ML","TAMPA 75ML","FORMA DE PUDIM","QUENTINHA DELIVERY","Bowl 600ml","Bowl 1100ml","Kraft Multiuso 1000ml","Kraft Multiuso 600ml","Pote 150ml kraft"],
+  "HORTIFRUTI": ["ALHO DESCASCADO","ALHO PORÓ","TOMATE","CEBOLA","PIMENTÃO VERDE","PIMENTÃO VERMELHO","SALSA CRESPA","COENTRO","MIX DE PIMENTA","MAÇÃ VERDE","AIPIM","LIMÃO","CENOURA","COUVE FLOR","BROCOLIS NACIONAL","BROCOLIS AMERICANO","ALFACE LISA","OVOS","ALFACE ROXA","ALFACE CRESPA","TOMATE CEREJA","PICLES","BATATA LISA","ABOBRINHA","BATATA ASTERIX","CEBOLA ROXA","MIX DE LEGUMES"],
+  "LIMPEZA": ["PAPEL INTERFOLHA","SABONETE LIQUIDO","ALCOOL 70","CLORO","DETERGENTE","VIPER GRILL","DESINFETANTE HORTIFRUTI","ESPONJA","FIBRAÇO","LUVA LATEX","PANO DE CHÃO","PERFEX","SACO DE LIXO 200LT","CIF","DETERGENTE KALY","DETERGENTE CLORADO","DESENCRUSTANTE C212","DESENGORDURANTE AL","ALCOOL GEL H180","SABONETE H170"],
+  "PEIXES": ["CAMARÃO PASTEL 61/70","CARNE DE SIRI","LULA TUBO 175GR","LULA ROXA 100GR","FILÉ DE TILAPIA 200GR","FILÉ DE PANGA","SALMÃO FILÉ 250GR","POLVO COZIDO 100GR","FILÉ DE GAROUPA 250GR","CAMARÃO G INTEIRO","CAMARÃO 125GR","CAMARÃO 220GR","CAMARÃO RABINHO","FILÉ DE LINGUADO","BACALHAU POSTA/LOMBO","MEDALHÃO DE ATUM","MEDALHÃO DE SALMÃO","MANJUBINHA","SARDINHA"]
+};
+
+const CATEGORIAS = Object.keys(DADOS);
+let selectedCategoria = '';
+let selectedItem = '';
+let openDropdown = null;
+
+// Build categoria dropdown
+function buildCategoriaList() {
+  const list = document.getElementById('list-categoria');
+  list.innerHTML = CATEGORIAS.map(cat => `
+    <div class="dropdown-option" data-value="${cat}" onclick="selectCategoria('${cat}')">${cat}</div>
+  `).join('');
+}
+
+function buildItemList(categoria) {
+  const list = document.getElementById('list-item');
+  if (!categoria) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div>';
+    return;
+  }
+  const items = DADOS[categoria] || [];
+  list.innerHTML = items.map(item => `
+    <div class="dropdown-option" data-value="${item}" onclick="selectItem('${item.replace(/'/g, "\\'")}')">${item}</div>
+  `).join('');
+}
+
+function toggleDropdown(which) {
+  const panel = document.getElementById('panel-' + which);
+  const trigger = document.getElementById('trigger-' + which);
+  const isOpen = panel.classList.contains('open');
+
+  // close all
+  closeAllDropdowns();
+
+  if (!isOpen) {
+    panel.classList.add('open');
+    trigger.classList.add('open');
+    openDropdown = which;
+    // focus search
+    const searchInput = panel.querySelector('input');
+    if (searchInput) setTimeout(() => searchInput.focus(), 50);
+  }
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('open'));
+  openDropdown = null;
+}
+
+function selectCategoria(cat) {
+  selectedCategoria = cat;
+  selectedItem = '';
+  document.getElementById('label-categoria').textContent = cat;
+  document.getElementById('trigger-categoria').classList.remove('placeholder');
+  // reset item
+  document.getElementById('label-item').textContent = 'Selecione o item';
+  document.getElementById('trigger-item').classList.add('placeholder');
+  buildItemList(cat);
+  closeAllDropdowns();
+}
+
+function selectItem(item) {
+  selectedItem = item;
+  document.getElementById('label-item').textContent = item;
+  document.getElementById('trigger-item').classList.remove('placeholder');
+  closeAllDropdowns();
+}
+
+function filterDropdown(which, query) {
+  const list = document.getElementById('list-' + which);
+  const q = query.toLowerCase();
+  list.querySelectorAll('.dropdown-option').forEach(opt => {
+    opt.classList.toggle('hidden', !opt.dataset.value.toLowerCase().includes(q));
+  });
+}
+
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.custom-select')) closeAllDropdowns();
+});
+
+// Calc total
+['f-salao','f-estoque'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calcTotal);
+});
+
+function calcTotal() {
+  const s = parseFloat(document.getElementById('f-salao').value) || 0;
+  const e = parseFloat(document.getElementById('f-estoque').value) || 0;
+  const t = s + e;
+  document.getElementById('total-display').value = t > 0 ? t : '';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0&&tab==='form')||(i===1&&tab==='history'));
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  if (tab === 'history') renderHistory();
+}
+
+function updateOnlineStatus() {
+  document.getElementById('offlineBar').classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+async function submitForm() {
+  if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
+  if (!selectedCategoria) { showToast('Selecione uma categoria', 'error'); return; }
+
+  const medida  = document.getElementById('f-medida').value.trim();
+  const salao   = parseFloat(document.getElementById('f-salao').value) || 0;
+  const estoque = parseFloat(document.getElementById('f-estoque').value) || 0;
+  const total   = salao + estoque;
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  const record = { categoria: selectedCategoria, item: selectedItem, medida, salao, estoque, total, ts: Date.now(), synced: false };
+  saveLocal(record);
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ item: selectedItem, medida, salao, estoque, total })
+    });
+    if (res.ok) {
+      record.synced = true;
+      updateLocalRecord(record);
+      showToast('✓ Enviado para a planilha!', 'success');
+      clearForm();
+    } else throw new Error();
+  } catch {
+    showToast('Salvo localmente (sem conexão)', 'error');
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('loading');
+}
+
+function clearForm() {
+  selectedCategoria = '';
+  selectedItem = '';
+  document.getElementById('label-categoria').textContent = 'Selecione a categoria';
+  document.getElementById('trigger-categoria').classList.add('placeholder');
+  document.getElementById('label-item').textContent = 'Selecione o item';
+  document.getElementById('trigger-item').classList.add('placeholder');
+  buildItemList('');
+  ['f-medida','f-salao','f-estoque'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('total-display').value = '';
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+}
+function saveLocal(r) {
+  const h = getHistory(); h.unshift(r);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0, 200)));
+}
+function updateLocalRecord(r) {
+  const h = getHistory();
+  const i = h.findIndex(x => x.ts === r.ts);
+  if (i !== -1) { h[i] = r; localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); }
+}
+
+function renderHistory() {
+  const h = getHistory();
+  const list = document.getElementById('historyList');
+  document.getElementById('countBadge').textContent = h.length;
+  if (!h.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba LANÇAR para começar.</p></div>`;
+    return;
+  }
+  list.innerHTML = h.map(r => `
+    <div class="history-item">
+      <div class="history-item-top">
+        <div>
+          <div class="history-item-name">${r.item}</div>
+          <div class="history-item-cat">${r.categoria || ''}</div>
+          <div class="history-item-time">${formatDate(r.ts)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="history-total">${r.total}</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted)">
+            <div class="status-dot ${r.synced ? 'ok' : 'error'}"></div>
+            ${r.synced ? 'ENVIADO' : 'PENDENTE'}
+          </div>
+        </div>
+      </div>
+      <div class="history-chips">
+        <div class="chip">Medida <strong>${r.medida || '—'}</strong></div>
+        <div class="chip">Salão <strong>${r.salao}</strong></div>
+        <div class="chip">Estoque <strong>${r.estoque}</strong></div>
+      </div>
+      ${!r.synced ? `<button class="btn-retry" onclick="retrySend(${r.ts})">↻ Reenviar</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function retrySend(ts) {
+  const r = getHistory().find(x => x.ts === ts);
+  if (!r) return;
+  try {
+    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ item: r.item, medida: r.medida, salao: r.salao, estoque: r.estoque, total: r.total }) });
+    if (res.ok) { r.synced = true; updateLocalRecord(r); showToast('✓ Sincronizado!', 'success'); renderHistory(); }
+  } catch { showToast('Falha ao reenviar', 'error'); }
+}
+
+function clearHistory() {
+  if (confirm('Apagar todo o histórico local?')) { localStorage.removeItem(STORAGE_KEY); renderHistory(); }
+}
+
+function formatDate(ts) {
+  return new Date(ts).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+let toastTimer;
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type;
+  clearTimeout(toastTimer);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+buildCategoriaList();
+renderHistory();
+</script>
+</body>
+</html>
