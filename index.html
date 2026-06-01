@@ -1051,7 +1051,7 @@ function renderHistory() {
     list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba Contagem para começar.</p></div>`;
     return;
   }
-  list.innerHTML = h.map(r => {
+  list.innerHTML = h.map((r, idx) => {
     const itens = r.itens || [];
     return `
     <div class="history-item">
@@ -1073,8 +1073,38 @@ function renderHistory() {
         ${itens.slice(0,8).map(i=>`<div class="hi-chip">${i.item} <strong>${i.total}</strong></div>`).join('')}
         ${itens.length>8?`<div class="hi-chip">+${itens.length-8} mais</div>`:''}
       </div>
+      ${!r.synced ? `<button onclick="reenviarContagem(${idx})" style="margin-top:12px;width:100%;padding:10px;background:none;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">↻ Reenviar para planilha</button>` : ''}
     </div>`;
   }).join('');
+}
+
+async function reenviarContagem(idx) {
+  const h = getHistory();
+  const r = h[idx];
+  if (!r) return;
+
+  showToast('Reenviando...', 'success');
+
+  const itens = r.itens || [];
+  const payload = itens.map(i => ({
+    item: i.item,
+    medida: i.medida || '',
+    salao: i.salao || 0,
+    estoque: i.estoque || 0,
+    total: i.total
+  }));
+
+  if (!payload.length) { showToast('Nenhum item para reenviar', 'error'); return; }
+
+  try {
+    await enviarDados(payload);
+    h[idx].synced = true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
+    showToast(`✓ ${payload.length} itens reenviados!`, 'success');
+    renderHistory();
+  } catch {
+    showToast('Falha ao reenviar', 'error');
+  }
 }
 
 function clearHistory() {
