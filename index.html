@@ -11,159 +11,65 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0a0f14;
-      --surface: #111820;
-      --surface2: #1a2330;
-      --border: #1e2d3d;
-      --accent: #00d4ff;
-      --accent2: #ff6b35;
-      --text: #e8f0f7;
-      --text-muted: #5a7a94;
-      --success: #00e676;
-      --error: #ff4444;
-      --radius: 12px;
+      --bg: #0a0f14; --surface: #111820; --surface2: #1a2330;
+      --border: #1e2d3d; --accent: #00d4ff; --accent2: #ff6b35;
+      --text: #e8f0f7; --text-muted: #5a7a94; --success: #00e676;
+      --error: #ff4444; --radius: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Mono', monospace;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-    header {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(10,15,20,0.92);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100dvh; display: flex; flex-direction: column; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+    header { position: sticky; top: 0; z-index: 100; background: rgba(10,15,20,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
     .app-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
     .app-title span { color: var(--accent); }
     .app-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
     .tab-bar { display: flex; gap: 4px; background: var(--surface); border-radius: 8px; padding: 3px; }
-    .tab-btn {
-      background: none; border: none; color: var(--text-muted);
-      font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
-      padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em;
-    }
+    .tab-btn { background: none; border: none; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em; }
     .tab-btn.active { background: var(--accent); color: var(--bg); font-weight: 700; }
     main { flex: 1; position: relative; z-index: 1; overflow: hidden; }
     .view { display: none; padding: 24px 20px; animation: fadeIn 0.25s ease; }
     .view.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* FORM CARD */
-    .form-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 24px 20px;
-      position: relative; overflow: hidden;
-    }
-    .form-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-    }
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; position: relative; overflow: hidden; }
+    .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
     .form-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.01em; }
     .form-grid { display: grid; gap: 14px; }
     .field { display: flex; flex-direction: column; gap: 6px; }
     .field label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 
-    /* Custom select / dropdown */
-    .custom-select {
-      position: relative;
-    }
-    .select-trigger {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 12px 40px 12px 14px; color: var(--text);
-      font-family: 'DM Mono', monospace; font-size: 14px;
-      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
-      display: flex; align-items: center; justify-content: space-between;
-      user-select: none; min-height: 46px;
-    }
+    /* Custom select */
+    .custom-select { position: relative; }
+    .select-trigger { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 40px 12px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: space-between; user-select: none; min-height: 46px; position: relative; }
     .select-trigger.placeholder { color: rgba(90,122,148,0.6); }
     .select-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
-    .select-trigger svg { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); transition: transform 0.2s; pointer-events: none; }
-    .select-trigger.open svg { transform: translateY(-50%) rotate(180deg); }
-
-    .dropdown-panel {
-      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
-      background: var(--surface2); border: 1px solid var(--accent);
-      border-radius: 10px; z-index: 200; overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      display: none; flex-direction: column;
-      max-height: 300px;
-    }
+    .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); transition: transform 0.2s; pointer-events: none; }
+    .select-trigger.open .select-arrow { transform: translateY(-50%) rotate(180deg); }
+    .dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; z-index: 200; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: none; flex-direction: column; max-height: 300px; }
     .dropdown-panel.open { display: flex; animation: fadeIn 0.15s ease; }
-
-    .dropdown-search {
-      padding: 10px 12px; border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .dropdown-search input {
-      width: 100%; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 6px; padding: 8px 12px; color: var(--text);
-      font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
-    }
+    .dropdown-search { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .dropdown-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; }
     .dropdown-search input:focus { border-color: var(--accent); }
     .dropdown-search input::placeholder { color: var(--text-muted); opacity: 0.5; }
-
     .dropdown-list { overflow-y: auto; flex: 1; }
     .dropdown-list::-webkit-scrollbar { width: 4px; }
-    .dropdown-list::-webkit-scrollbar-track { background: transparent; }
     .dropdown-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    .dropdown-group-label {
-      padding: 8px 14px 4px;
-      font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--accent); font-weight: 700; background: rgba(0,212,255,0.05);
-      border-top: 1px solid var(--border); position: sticky; top: 0;
-    }
+    .dropdown-group-label { padding: 8px 14px 4px; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 700; background: rgba(0,212,255,0.05); border-top: 1px solid var(--border); position: sticky; top: 0; }
     .dropdown-group-label:first-child { border-top: none; }
-
-    .dropdown-option {
-      padding: 11px 14px; font-size: 13px; cursor: pointer;
-      transition: background 0.15s; color: var(--text);
-    }
+    .dropdown-option { padding: 11px 14px; font-size: 13px; cursor: pointer; transition: background 0.15s; color: var(--text); }
     .dropdown-option:hover { background: rgba(0,212,255,0.08); color: var(--accent); }
     .dropdown-option.selected { color: var(--accent); font-weight: 500; }
     .dropdown-option.hidden { display: none; }
 
-    /* regular input */
-    .field input[type="text"], .field input[type="number"] {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 12px 14px; color: var(--text);
-      font-family: 'DM Mono', monospace; font-size: 14px; outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; width: 100%;
-    }
+    /* Medida readonly com destaque */
+    .medida-auto { background: rgba(0,212,255,0.06) !important; border-color: rgba(0,212,255,0.15) !important; color: var(--text-muted) !important; font-size: 13px !important; }
+    .medida-auto.filled { color: var(--accent) !important; border-color: rgba(0,212,255,0.3) !important; }
+
+    .field input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; width: 100%; }
     .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
     .field input::placeholder { color: var(--text-muted); opacity: 0.5; }
-
-    #total-display {
-      background: rgba(0,212,255,0.06); border-color: rgba(0,212,255,0.2);
-      color: var(--accent); font-weight: 500;
-    }
+    #total-display { background: rgba(0,212,255,0.06); border-color: rgba(0,212,255,0.2); color: var(--accent); font-weight: 500; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-    .btn-submit {
-      margin-top: 20px; width: 100%; padding: 16px;
-      background: var(--accent); color: var(--bg); border: none; border-radius: 10px;
-      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.02em;
-      cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
-    }
+    .btn-submit { margin-top: 20px; width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
     .btn-submit:active { transform: scale(0.98); }
     .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-submit .btn-text { transition: opacity 0.2s; }
@@ -172,21 +78,10 @@
     .btn-submit.loading .spinner { display: flex; }
     .spinner svg { animation: spin 0.8s linear infinite; width: 22px; height: 22px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px 20px; font-size: 13px; font-weight: 500;
-      z-index: 999; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
-      white-space: nowrap;
-    }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; font-size: 13px; font-weight: 500; z-index: 999; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.success { border-color: var(--success); color: var(--success); }
     .toast.error { border-color: var(--error); color: var(--error); }
-
-    /* HISTORY */
     .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .history-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
     .count-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text-muted); }
@@ -211,23 +106,10 @@
     .btn-retry { background: none; border: 1px solid var(--accent2); border-radius: 6px; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 8px; cursor: pointer; margin-top: 6px; }
     .offline-bar { background: rgba(255,107,53,0.12); border-bottom: 1px solid rgba(255,107,53,0.25); color: var(--accent2); font-size: 11px; text-align: center; padding: 8px; letter-spacing: 0.06em; display: none; position: relative; z-index: 50; }
     .offline-bar.show { display: block; }
-
-    /* Category pill chips for quick filter */
-    .cat-pills { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; scrollbar-width: none; }
-    .cat-pills::-webkit-scrollbar { display: none; }
-    .cat-pill {
-      flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
-      border: 1px solid var(--border); background: var(--surface2);
-      font-size: 11px; font-weight: 500; color: var(--text-muted);
-      cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; white-space: nowrap;
-    }
-    .cat-pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
   </style>
 </head>
 <body>
-
 <div class="offline-bar" id="offlineBar">⚠ SEM CONEXÃO — dados salvos localmente</div>
-
 <header>
   <div>
     <div class="app-title">ESTOQUE<span>.</span></div>
@@ -238,75 +120,61 @@
     <button class="tab-btn" onclick="switchTab('history')">HISTÓRICO</button>
   </div>
 </header>
-
 <main>
-  <!-- FORMULÁRIO -->
   <div class="view active" id="view-form">
     <div class="form-card">
       <div class="form-title">Novo lançamento</div>
       <div class="form-grid">
-
         <!-- CATEGORIA -->
         <div class="field">
           <label>Categoria</label>
           <div class="custom-select" id="sel-categoria">
             <div class="select-trigger placeholder" id="trigger-categoria" onclick="toggleDropdown('categoria')">
               <span id="label-categoria">Selecione a categoria</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             <div class="dropdown-panel" id="panel-categoria">
-              <div class="dropdown-search">
-                <input type="text" placeholder="Buscar categoria..." oninput="filterDropdown('categoria', this.value)" />
-              </div>
+              <div class="dropdown-search"><input type="text" placeholder="Buscar categoria..." oninput="filterDropdown('categoria', this.value)" /></div>
               <div class="dropdown-list" id="list-categoria"></div>
             </div>
           </div>
         </div>
-
         <!-- ITEM -->
         <div class="field">
           <label>Item</label>
           <div class="custom-select" id="sel-item">
             <div class="select-trigger placeholder" id="trigger-item" onclick="toggleDropdown('item')">
               <span id="label-item">Selecione o item</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             <div class="dropdown-panel" id="panel-item">
-              <div class="dropdown-search">
-                <input type="text" placeholder="Buscar item..." oninput="filterDropdown('item', this.value)" />
-              </div>
-              <div class="dropdown-list" id="list-item">
-                <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div>
-              </div>
+              <div class="dropdown-search"><input type="text" placeholder="Buscar item..." oninput="filterDropdown('item', this.value)" /></div>
+              <div class="dropdown-list" id="list-item"><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div></div>
             </div>
           </div>
         </div>
-
-        <!-- MEDIDA -->
+        <!-- MEDIDA (auto) -->
         <div class="field">
-          <label>Medida</label>
-          <input id="f-medida" type="text" placeholder="Ex: kg, un, cx" autocomplete="off" />
+          <label>Medida <span style="color:var(--accent);font-size:9px;margin-left:4px">● AUTO</span></label>
+          <input id="f-medida" type="text" class="medida-auto" readonly placeholder="Preenchido automaticamente" tabindex="-1" />
         </div>
-
         <!-- SALÃO + ESTOQUE -->
         <div class="row-2">
           <div class="field">
             <label>Salão</label>
-            <input id="f-salao" type="number" inputmode="decimal" placeholder="0" />
+            <input id="f-salao" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
           </div>
           <div class="field">
             <label>Estoque</label>
-            <input id="f-estoque" type="number" inputmode="decimal" placeholder="0" />
+            <input id="f-estoque" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
           </div>
         </div>
-
         <!-- TOTAL -->
         <div class="field">
           <label>Total (automático)</label>
           <input id="total-display" type="text" readonly placeholder="—" tabindex="-1" />
         </div>
       </div>
-
       <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
         <span class="btn-text">ENVIAR PARA PLANILHA</span>
         <span class="spinner">
@@ -318,7 +186,6 @@
     </div>
   </div>
 
-  <!-- HISTÓRICO -->
   <div class="view" id="view-history">
     <div class="history-header">
       <div style="display:flex;align-items:center;gap:10px">
@@ -330,7 +197,6 @@
     <div class="history-list" id="historyList"></div>
   </div>
 </main>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -338,12 +204,69 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz5zTyHsDJfyt1suF-4
 const STORAGE_KEY = "estoque_history";
 
 const DADOS = {
-  "BEBIDAS": ["COCA COLA LATA","COCA COLA ZERO LATA","GUARANA","GUARANÁ ZERO","AGUA SEM GÁS","AGUA COM GÁS","STELLA 330ML","SPATEN","MATE NATURAL/ LIMÃO","ICE TEA","H2O","H2O LIMONETO","AGUA TONICA","STELLA PURE GOLD","DEL VALLE UVA"],
-  "COZINHA": ["MASSA DE PASTEL 37","CATUPIRY","QUEIJO MINAS","QUEIJO PARMESÃO","FARINHA PANKO","FARINHA DE TRIGO","AZEITE EXTRA VIRGEM","AZEITE MISTO","Farinha de Rosca","OLEO SOJA","MUÇARELA","MOLHO DE TOMATE","VINHO BRANCO","MOLHO INGLES","AZEITONA VERDE FAT","PAPRICA MISTURADA","PAPRICA PICANTE","PAPRICA DOCE","AÇAFRÃO","LEITE DE COCO","AZEITE DE DENDÊ","ARROZ PARBOILIZADO","SAL","ERVILHA","PIMENTA DO REINO","ERVAS FINAS","MEL","MOSTARDA AMARELA","KETCHUP 3,2kg","CHAMPIGNON","ALCAPARRAS","AZEITONA PRETA FAT","CREME DE LEITE 1LT 17%","FARINHA DE MANDIOCA","MANTEIGA SEM SAL","MAIONESE 2,8","CALDO DE GALINHA","COLORAL","BATATA FRITA 7MM","DOMEQ OU PRESIDENT","VINAGRE ALCOOL","LEITE","BICABORNATO","PALMITO 2kg","AÇUCAR","BACON FATIADO","PÃO DE BURGUER","LEITE CONDENSADO","SPAGUETTI GRAN DURO","CAFÉ"],
-  "DESCARTAVEL": ["GUARDANAPO SACHET","PAPEL TOALHA","COPO DESCARTAVEL","CANUDO","CAIXA DE LUVA G","SAL SACHET","SACO DE TALHER KRAFT","TOUCA DE COZINHA","GARFO DE MADEIRA","SACO VIAGEM KRAFT","FILME PVC","BOBINA IMPRESSORA","POTE PRAFESTA 1500","POTE PRAFESTA 500ml","POTE MOLHO C/TAMPA 30ML","ETIQUETA DE VALIDADE","BOBINA 20X30","BOBINA 30X40","BOBINA 40X60","saco vacuo 20x30","POTE 75 ML","TAMPA 75ML","FORMA DE PUDIM","QUENTINHA DELIVERY","Bowl 600ml","Bowl 1100ml","Kraft Multiuso 1000ml","Kraft Multiuso 600ml","Pote 150ml kraft"],
-  "HORTIFRUTI": ["ALHO DESCASCADO","ALHO PORÓ","TOMATE","CEBOLA","PIMENTÃO VERDE","PIMENTÃO VERMELHO","SALSA CRESPA","COENTRO","MIX DE PIMENTA","MAÇÃ VERDE","AIPIM","LIMÃO","CENOURA","COUVE FLOR","BROCOLIS NACIONAL","BROCOLIS AMERICANO","ALFACE LISA","OVOS","ALFACE ROXA","ALFACE CRESPA","TOMATE CEREJA","PICLES","BATATA LISA","ABOBRINHA","BATATA ASTERIX","CEBOLA ROXA","MIX DE LEGUMES"],
-  "LIMPEZA": ["PAPEL INTERFOLHA","SABONETE LIQUIDO","ALCOOL 70","CLORO","DETERGENTE","VIPER GRILL","DESINFETANTE HORTIFRUTI","ESPONJA","FIBRAÇO","LUVA LATEX","PANO DE CHÃO","PERFEX","SACO DE LIXO 200LT","CIF","DETERGENTE KALY","DETERGENTE CLORADO","DESENCRUSTANTE C212","DESENGORDURANTE AL","ALCOOL GEL H180","SABONETE H170"],
-  "PEIXES": ["CAMARÃO PASTEL 61/70","CARNE DE SIRI","LULA TUBO 175GR","LULA ROXA 100GR","FILÉ DE TILAPIA 200GR","FILÉ DE PANGA","SALMÃO FILÉ 250GR","POLVO COZIDO 100GR","FILÉ DE GAROUPA 250GR","CAMARÃO G INTEIRO","CAMARÃO 125GR","CAMARÃO 220GR","CAMARÃO RABINHO","FILÉ DE LINGUADO","BACALHAU POSTA/LOMBO","MEDALHÃO DE ATUM","MEDALHÃO DE SALMÃO","MANJUBINHA","SARDINHA"]
+  "BEBIDAS": {
+    "COCA COLA LATA":"UNIDADE","COCA COLA ZERO LATA":"UNIDADE","GUARANA":"UNIDADE",
+    "GUARANÁ ZERO":"UNIDADE","AGUA SEM GÁS":"UNIDADE","AGUA COM GÁS":"UNIDADE",
+    "STELLA 330ML":"UNIDADE","SPATEN":"UNIDADE","MATE NATURAL/ LIMÃO":"UNIDADE",
+    "ICE TEA":"UNIDADE","H2O":"UNIDADE","H2O LIMONETO":"UNIDADE",
+    "AGUA TONICA":"UNIDADE","STELLA PURE GOLD":"UNIDADE","DEL VALLE UVA":"UNIDADE"
+  },
+  "COZINHA": {
+    "MASSA DE PASTEL 37":"CX C/ 20","CATUPIRY":"UNID","QUEIJO MINAS":"KG/UNID",
+    "QUEIJO PARMESÃO":"KG/UNID","FARINHA PANKO":"KG CX COM 12","FARINHA DE TRIGO":"KG",
+    "AZEITE EXTRA VIRGEM":"5LT","AZEITE MISTO":"5LT","Farinha de Rosca":"500gr",
+    "OLEO SOJA":"900ML","MUÇARELA":"KG","MOLHO DE TOMATE":"PACOTE",
+    "VINHO BRANCO":"5LT","MOLHO INGLES":"LT","AZEITONA VERDE FAT":"BALDE",
+    "PAPRICA MISTURADA":"KG","PAPRICA PICANTE":"POTE 750GR","PAPRICA DOCE":"POTE 750GR",
+    "AÇAFRÃO":"POTE 750GR","LEITE DE COCO":"1LT","AZEITE DE DENDÊ":"500ML",
+    "ARROZ PARBOILIZADO":"5KG","SAL":"KG","ERVILHA":"KG","PIMENTA DO REINO":"KG",
+    "ERVAS FINAS":"KG","MEL":"BISNAGA","MOSTARDA AMARELA":"UNID","KETCHUP 3,2kg":"UNID",
+    "CHAMPIGNON":"BALDE","ALCAPARRAS":"BALDE","AZEITONA PRETA FAT":"BALDE",
+    "CREME DE LEITE 1LT 17%":"UNIDADE","FARINHA DE MANDIOCA":"KG","MANTEIGA SEM SAL":"BLOCO 5KG",
+    "MAIONESE 2,8":"BALDE","CALDO DE GALINHA":"KG","COLORAL":"KG",
+    "BATATA FRITA 7MM":"PORÇÃO 200GR","DOMEQ OU PRESIDENT":"GARRAFA","VINAGRE ALCOOL":"GARRAFA",
+    "LEITE":"LT","BICABORNATO":"KG","PALMITO 2kg":"VIDRO","AÇUCAR":"KG",
+    "BACON FATIADO":"KG","PÃO DE BURGUER":"PCT","LEITE CONDENSADO":"UNID",
+    "SPAGUETTI GRAN DURO":"KG","CAFÉ":"KG"
+  },
+  "DESCARTAVEL": {
+    "GUARDANAPO SACHET":"CX","PAPEL TOALHA":"PCT C/2","COPO DESCARTAVEL":"PCT 50UNID",
+    "CANUDO":"PCT","CAIXA DE LUVA G":"CX","SAL SACHET":"CX",
+    "SACO DE TALHER KRAFT":"PACOTE 100","TOUCA DE COZINHA":"PCT","GARFO DE MADEIRA":"PCT",
+    "SACO VIAGEM KRAFT":"PCT 50UNID","FILME PVC":"UNIDADE","BOBINA IMPRESSORA":"UNIDADE",
+    "POTE PRAFESTA 1500":"PACOTE 10","POTE PRAFESTA 500ml":"PACOTE","POTE MOLHO C/TAMPA 30ML":"UNIDADE",
+    "ETIQUETA DE VALIDADE":"ROLO","BOBINA 20X30":"UNIDADE","BOBINA 30X40":"UNIDADE",
+    "BOBINA 40X60":"UNIDADE","saco vacuo 20x30":"UNIDADE","POTE 75 ML":"PCT 50UNID",
+    "TAMPA 75ML":"PCT 50UNID","FORMA DE PUDIM":"PCT 10 UNID","QUENTINHA DELIVERY":"PCT 50UNID",
+    "Bowl 600ml":"UNIDADE","Bowl 1100ml":"UNIDADE","Kraft Multiuso 1000ml":"UNIDADE",
+    "Kraft Multiuso 600ml":"UNIDADE","Pote 150ml kraft":"UNIDADE"
+  },
+  "HORTIFRUTI": {
+    "ALHO DESCASCADO":"KG","ALHO PORÓ":"ML 12","TOMATE":"KG","CEBOLA":"KG",
+    "PIMENTÃO VERDE":"KG","PIMENTÃO VERMELHO":"KG","SALSA CRESPA":"ML","COENTRO":"ML",
+    "MIX DE PIMENTA":"KG","MAÇÃ VERDE":"KG","AIPIM":"KG","LIMÃO":"KG",
+    "CENOURA":"KG","COUVE FLOR":"KG","BROCOLIS NACIONAL":"UNIDADE","BROCOLIS AMERICANO":"UNIDADE",
+    "ALFACE LISA":"UNIDADE","OVOS":"UNIDADE","ALFACE ROXA":"UNIDADE","ALFACE CRESPA":"UNIDADE",
+    "TOMATE CEREJA":"BANDEIJAS","PICLES":"KG","BATATA LISA":"KG","ABOBRINHA":"KG",
+    "BATATA ASTERIX":"KG","CEBOLA ROXA":"KG","MIX DE LEGUMES":"UNID"
+  },
+  "LIMPEZA": {
+    "PAPEL INTERFOLHA":"FARDO COM 3","SABONETE LIQUIDO":"UNIDADE","ALCOOL 70":"UNIDADE",
+    "CLORO":"BB 5LT","DETERGENTE":"BB 5LT","VIPER GRILL":"BB 5LT",
+    "DESINFETANTE HORTIFRUTI":"POTE 1KG","ESPONJA":"UNIDADE/5","FIBRAÇO":"PCT/6",
+    "LUVA LATEX":"UNIDADE/PAR","PANO DE CHÃO":"UNIDADE","PERFEX":"ROLO",
+    "SACO DE LIXO 200LT":"PACOTE 100","CIF":"UNIDADE","DETERGENTE KALY":"BB 5LT",
+    "DETERGENTE CLORADO":"BB 5LT","DESENCRUSTANTE C212":"BB 5LT","DESENGORDURANTE AL":"BB 5LT",
+    "ALCOOL GEL H180":"SACHE","SABONETE H170":"BB 5LT"
+  },
+  "PEIXES": {
+    "CAMARÃO PASTEL 61/70":"KG","CARNE DE SIRI":"KG","LULA TUBO 175GR":"UNIDADE",
+    "LULA ROXA 100GR":"UNIDADE","FILÉ DE TILAPIA 200GR":"UNIDADE","FILÉ DE PANGA":"KG",
+    "SALMÃO FILÉ 250GR":"UNIDADE","POLVO COZIDO 100GR":"UNIDADE","FILÉ DE GAROUPA 250GR":"UNIDADE",
+    "CAMARÃO G INTEIRO":"KG","CAMARÃO 125GR":"UNIDADE","CAMARÃO 220GR":"UNIDADE",
+    "CAMARÃO RABINHO":"KG","FILÉ DE LINGUADO":"KG","BACALHAU POSTA/LOMBO":"KG",
+    "MEDALHÃO DE ATUM":"KG","MEDALHÃO DE SALMÃO":"KG","MANJUBINHA":"300GR","SARDINHA":"6 UNID"
+  }
 };
 
 const CATEGORIAS = Object.keys(DADOS);
@@ -351,12 +274,11 @@ let selectedCategoria = '';
 let selectedItem = '';
 let openDropdown = null;
 
-// Build categoria dropdown
 function buildCategoriaList() {
   const list = document.getElementById('list-categoria');
-  list.innerHTML = CATEGORIAS.map(cat => `
-    <div class="dropdown-option" data-value="${cat}" onclick="selectCategoria('${cat}')">${cat}</div>
-  `).join('');
+  list.innerHTML = CATEGORIAS.map(cat =>
+    `<div class="dropdown-option" data-value="${cat}" onclick="selectCategoria('${cat}')">${cat}</div>`
+  ).join('');
 }
 
 function buildItemList(categoria) {
@@ -365,27 +287,23 @@ function buildItemList(categoria) {
     list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div>';
     return;
   }
-  const items = DADOS[categoria] || [];
-  list.innerHTML = items.map(item => `
-    <div class="dropdown-option" data-value="${item}" onclick="selectItem('${item.replace(/'/g, "\\'")}')">${item}</div>
-  `).join('');
+  const items = Object.keys(DADOS[categoria]);
+  list.innerHTML = items.map(item =>
+    `<div class="dropdown-option" data-value="${item}" onclick="selectItem(this)">${item}</div>`
+  ).join('');
 }
 
 function toggleDropdown(which) {
   const panel = document.getElementById('panel-' + which);
   const trigger = document.getElementById('trigger-' + which);
   const isOpen = panel.classList.contains('open');
-
-  // close all
   closeAllDropdowns();
-
   if (!isOpen) {
     panel.classList.add('open');
     trigger.classList.add('open');
     openDropdown = which;
-    // focus search
-    const searchInput = panel.querySelector('input');
-    if (searchInput) setTimeout(() => searchInput.focus(), 50);
+    const si = panel.querySelector('input');
+    if (si) setTimeout(() => si.focus(), 50);
   }
 }
 
@@ -400,34 +318,42 @@ function selectCategoria(cat) {
   selectedItem = '';
   document.getElementById('label-categoria').textContent = cat;
   document.getElementById('trigger-categoria').classList.remove('placeholder');
-  // reset item
   document.getElementById('label-item').textContent = 'Selecione o item';
   document.getElementById('trigger-item').classList.add('placeholder');
+  // clear medida
+  const m = document.getElementById('f-medida');
+  m.value = '';
+  m.classList.remove('filled');
   buildItemList(cat);
   closeAllDropdowns();
 }
 
-function selectItem(item) {
+function selectItem(el) {
+  const item = el.dataset.value;
   selectedItem = item;
   document.getElementById('label-item').textContent = item;
   document.getElementById('trigger-item').classList.remove('placeholder');
+  // Auto-fill medida
+  const medida = DADOS[selectedCategoria][item] || '';
+  const m = document.getElementById('f-medida');
+  m.value = medida;
+  m.classList.toggle('filled', !!medida);
   closeAllDropdowns();
+  // Focus salao
+  setTimeout(() => document.getElementById('f-salao').focus(), 100);
 }
 
 function filterDropdown(which, query) {
-  const list = document.getElementById('list-' + which);
   const q = query.toLowerCase();
-  list.querySelectorAll('.dropdown-option').forEach(opt => {
+  document.getElementById('list-' + which).querySelectorAll('.dropdown-option').forEach(opt => {
     opt.classList.toggle('hidden', !opt.dataset.value.toLowerCase().includes(q));
   });
 }
 
-// Close on outside click
 document.addEventListener('click', e => {
   if (!e.target.closest('.custom-select')) closeAllDropdowns();
 });
 
-// Calc total
 ['f-salao','f-estoque'].forEach(id => {
   document.getElementById(id).addEventListener('input', calcTotal);
 });
@@ -455,127 +381,105 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 updateOnlineStatus();
 
+function enviarDados(payload) {
+  return new Promise((resolve, reject) => {
+    const params = new URLSearchParams();
+    params.append('dados', JSON.stringify(payload));
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', SCRIPT_URL, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.timeout = 15000;
+    xhr.onload = () => resolve();
+    xhr.onerror = () => reject(new Error('network'));
+    xhr.ontimeout = () => reject(new Error('timeout'));
+    xhr.send(params.toString());
+  });
+}
+
 async function submitForm() {
   if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
-  if (!selectedCategoria) { showToast('Selecione uma categoria', 'error'); return; }
-
   const medida  = document.getElementById('f-medida').value.trim();
   const salao   = parseFloat(document.getElementById('f-salao').value) || 0;
   const estoque = parseFloat(document.getElementById('f-estoque').value) || 0;
   const total   = salao + estoque;
-
   const btn = document.getElementById('btnSubmit');
-  btn.disabled = true;
-  btn.classList.add('loading');
-
+  btn.disabled = true; btn.classList.add('loading');
   const record = { categoria: selectedCategoria, item: selectedItem, medida, salao, estoque, total, ts: Date.now(), synced: false };
   saveLocal(record);
-
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ item: selectedItem, medida, salao, estoque, total })
-    });
-    if (res.ok) {
-      record.synced = true;
-      updateLocalRecord(record);
-      showToast('✓ Enviado para a planilha!', 'success');
-      clearForm();
-    } else throw new Error();
-  } catch {
-    showToast('Salvo localmente (sem conexão)', 'error');
-  }
-
-  btn.disabled = false;
-  btn.classList.remove('loading');
+    await enviarDados({ item: selectedItem, medida, salao, estoque, total });
+    record.synced = true; updateLocalRecord(record);
+    showToast('✓ Enviado para a planilha!', 'success'); clearForm();
+  } catch(err) { showToast('Salvo localmente (sem conexão)', 'error'); }
+  btn.disabled = false; btn.classList.remove('loading');
 }
 
 function clearForm() {
-  selectedCategoria = '';
-  selectedItem = '';
+  selectedCategoria = ''; selectedItem = '';
   document.getElementById('label-categoria').textContent = 'Selecione a categoria';
   document.getElementById('trigger-categoria').classList.add('placeholder');
   document.getElementById('label-item').textContent = 'Selecione o item';
   document.getElementById('trigger-item').classList.add('placeholder');
+  const m = document.getElementById('f-medida'); m.value = ''; m.classList.remove('filled');
   buildItemList('');
-  ['f-medida','f-salao','f-estoque'].forEach(id => document.getElementById(id).value = '');
+  ['f-salao','f-estoque'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('total-display').value = '';
 }
 
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
-}
-function saveLocal(r) {
-  const h = getHistory(); h.unshift(r);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0, 200)));
-}
-function updateLocalRecord(r) {
-  const h = getHistory();
-  const i = h.findIndex(x => x.ts === r.ts);
-  if (i !== -1) { h[i] = r; localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); }
-}
+function getHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+function saveLocal(r) { const h = getHistory(); h.unshift(r); localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0,200))); }
+function updateLocalRecord(r) { const h = getHistory(); const i = h.findIndex(x => x.ts===r.ts); if(i!==-1){h[i]=r; localStorage.setItem(STORAGE_KEY,JSON.stringify(h));} }
 
 function renderHistory() {
   const h = getHistory();
   const list = document.getElementById('historyList');
   document.getElementById('countBadge').textContent = h.length;
-  if (!h.length) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba LANÇAR para começar.</p></div>`;
-    return;
-  }
+  if (!h.length) { list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba LANÇAR para começar.</p></div>`; return; }
   list.innerHTML = h.map(r => `
     <div class="history-item">
       <div class="history-item-top">
         <div>
           <div class="history-item-name">${r.item}</div>
-          <div class="history-item-cat">${r.categoria || ''}</div>
+          <div class="history-item-cat">${r.categoria||''}</div>
           <div class="history-item-time">${formatDate(r.ts)}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           <div class="history-total">${r.total}</div>
           <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted)">
-            <div class="status-dot ${r.synced ? 'ok' : 'error'}"></div>
-            ${r.synced ? 'ENVIADO' : 'PENDENTE'}
+            <div class="status-dot ${r.synced?'ok':'error'}"></div>
+            ${r.synced?'ENVIADO':'PENDENTE'}
           </div>
         </div>
       </div>
       <div class="history-chips">
-        <div class="chip">Medida <strong>${r.medida || '—'}</strong></div>
+        <div class="chip">Medida <strong>${r.medida||'—'}</strong></div>
         <div class="chip">Salão <strong>${r.salao}</strong></div>
         <div class="chip">Estoque <strong>${r.estoque}</strong></div>
       </div>
-      ${!r.synced ? `<button class="btn-retry" onclick="retrySend(${r.ts})">↻ Reenviar</button>` : ''}
+      ${!r.synced?`<button class="btn-retry" onclick="retrySend(${r.ts})">↻ Reenviar</button>`:''}
     </div>
   `).join('');
 }
 
 async function retrySend(ts) {
-  const r = getHistory().find(x => x.ts === ts);
-  if (!r) return;
+  const r = getHistory().find(x=>x.ts===ts); if(!r) return;
   try {
-    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ item: r.item, medida: r.medida, salao: r.salao, estoque: r.estoque, total: r.total }) });
-    if (res.ok) { r.synced = true; updateLocalRecord(r); showToast('✓ Sincronizado!', 'success'); renderHistory(); }
-  } catch { showToast('Falha ao reenviar', 'error'); }
+    await enviarDados({item:r.item,medida:r.medida,salao:r.salao,estoque:r.estoque,total:r.total});
+    r.synced=true;updateLocalRecord(r);showToast('✓ Sincronizado!','success');renderHistory();
+  } catch { showToast('Falha ao reenviar','error'); }
 }
 
-function clearHistory() {
-  if (confirm('Apagar todo o histórico local?')) { localStorage.removeItem(STORAGE_KEY); renderHistory(); }
-}
-
-function formatDate(ts) {
-  return new Date(ts).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
-}
+function clearHistory() { if(confirm('Apagar todo o histórico local?')){localStorage.removeItem(STORAGE_KEY);renderHistory();} }
+function formatDate(ts) { return new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
 
 let toastTimer;
 function showToast(msg, type='success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast ' + type;
+  const t = document.getElementById('toast'); t.textContent=msg; t.className='toast '+type;
   clearTimeout(toastTimer);
-  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  toastTimer = setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// Init
 buildCategoriaList();
 renderHistory();
 </script>
