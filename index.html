@@ -1094,6 +1094,142 @@ window.addEventListener('online', ()=>document.getElementById('offlineBar').clas
 window.addEventListener('offline', ()=>document.getElementById('offlineBar').classList.add('show'));
 if (!navigator.onLine) document.getElementById('offlineBar').classList.add('show');
 
+// ===================== RESULTADO =====================
+async function carregarDatas() {
+  const sel = document.getElementById('selectData');
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  try {
+    const data = await fetchJSON(SCRIPT_URL + '?acao=datas');
+    sel.innerHTML = '<option value="">-- Selecione a data --</option>';
+    if (data.datas && data.datas.length > 0) {
+      data.datas.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.data;
+        opt.textContent = formatDataLabel(d.data);
+        sel.appendChild(opt);
+      });
+    } else {
+      sel.innerHTML = '<option value="">Nenhuma data encontrada</option>';
+    }
+  } catch(err) {
+    sel.innerHTML = '<option value="">Erro ao carregar datas</option>';
+    showToast('Erro ao buscar datas', 'error');
+  }
+  document.getElementById('resEmpty').style.display = 'block';
+  document.getElementById('resContent').style.display = 'none';
+}
+
+async function carregarResultado() {
+  const data = document.getElementById('selectData').value;
+  const loading = document.getElementById('resLoading');
+  const content = document.getElementById('resContent');
+  const empty = document.getElementById('resEmpty');
+  if (!data) { content.style.display = 'none'; empty.style.display = 'block'; return; }
+  loading.style.display = 'flex';
+  content.style.display = 'none';
+  empty.style.display = 'none';
+  try {
+    const res = await fetchJSON(SCRIPT_URL + '?acao=resultado&data=' + encodeURIComponent(data));
+    if (res.status !== 'ok') throw new Error(res.message || 'Erro');
+    renderResultado(res);
+    loading.style.display = 'none';
+    content.style.display = 'block';
+  } catch(err) {
+    loading.style.display = 'none';
+    empty.style.display = 'block';
+    showToast('Erro ao carregar resultado', 'error');
+  }
+}
+
+function renderResultado(res) {
+  const totalCard = document.getElementById('resTotalCard');
+  const catsEl = document.getElementById('resCats');
+  totalCard.innerHTML = `
+    <div>
+      <div class="res-total-label">Total do Estoque</div>
+      <div class="res-total-val">${formatMoeda(res.totalGeral)}</div>
+      <div class="res-total-date">Contagem de ${res.data}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="res-total-label">Categorias</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--text-mid)">${Object.keys(res.categorias).length}</div>
+    </div>`;
+
+  const catOrder = ["BEBIDAS","COZINHA","DESCARTAVEL","HORTIFRUTI","LIMPEZA","PEIXES"];
+  const cats = Object.keys(res.categorias).sort((a,b) => {
+    const ia = catOrder.indexOf(a); const ib = catOrder.indexOf(b);
+    return (ia===-1?99:ia)-(ib===-1?99:ib);
+  });
+
+  catsEl.innerHTML = cats.map(cat => {
+    const c = res.categorias[cat];
+    const icon = {"BEBIDAS":"🥤","COZINHA":"🍳","DESCARTAVEL":"🧻","HORTIFRUTI":"🥦","LIMPEZA":"🧹","PEIXES":"🐟"}[cat]||'📦';
+    const itensComVal = c.itens.filter(i => i.quantidade > 0);
+    const rows = itensComVal.map(item => `
+      <div class="res-item-row">
+        <div class="res-item-name">${item.item}</div>
+        <div class="res-item-medida">${item.medida}</div>
+        <div class="res-item-qty">${item.quantidade}</div>
+        <div class="res-item-val ${item.valorTotal>0?'has-val':''}">${item.valorTotal>0?formatMoeda(item.valorTotal):'—'}</div>
+      </div>`).join('');
+    return `
+      <div class="res-cat-card" id="rescat-${cat}">
+        <div class="res-cat-header" onclick="toggleResCat('${cat}')">
+          <div class="res-cat-left">
+            <div class="res-cat-icon">${icon}</div>
+            <div>
+              <div class="res-cat-name">${cat}</div>
+              <div class="res-cat-count">${itensComVal.length} itens contados</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center">
+            <div class="res-cat-total">${formatMoeda(c.total)}</div>
+            <div class="res-cat-arrow">▼</div>
+          </div>
+        </div>
+        <div class="res-cat-items">
+          <div class="res-items-header">
+            <span style="flex:1">ITEM</span>
+            <span style="width:90px;text-align:center">MEDIDA</span>
+            <span style="width:60px;text-align:right">QTD</span>
+            <span style="width:110px;text-align:right">VALOR TOTAL</span>
+          </div>
+          ${rows||'<div style="padding:16px 20px;font-size:13px;color:var(--text-muted)">Nenhum item contado</div>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleResCat(cat) {
+  const el = document.getElementById('rescat-' + cat);
+  if (el) el.classList.toggle('open');
+}
+
+function fetchJSON(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const timer = setTimeout(() => { delete window[cbName]; reject(new Error('timeout')); }, 20000);
+    window[cbName] = (data) => { clearTimeout(timer); delete window[cbName]; resolve(data); };
+    const script = document.createElement('script');
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('load error')); };
+    document.body.appendChild(script);
+  });
+}
+
+function formatMoeda(val) {
+  if (!val || isNaN(val)) return 'R$ 0,00';
+  return 'R$ ' + Number(val).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function formatDataLabel(data) {
+  try {
+    const parts = data.split('/');
+    const d = new Date(parts[2], parts[1]-1, parts[0]);
+    return d.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  } catch { return data; }
+}
+
 buildCatGrid();
 </script>
 </body>
