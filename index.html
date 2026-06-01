@@ -3,383 +3,862 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f1923" />
+  <meta name="theme-color" content="#080d12" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Controle de Estoque" />
   <title>Controle de Estoque</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0a0f14; --surface: #111820; --surface2: #1a2330;
-      --border: #1e2d3d; --accent: #00d4ff; --accent2: #ff6b35;
-      --text: #e8f0f7; --text-muted: #5a7a94; --success: #00e676;
-      --error: #ff4444; --radius: 12px;
+      --bg: #080d12;
+      --surface: #0f1820;
+      --surface2: #162030;
+      --surface3: #1d2a3a;
+      --border: #1f3044;
+      --border2: #254060;
+      --accent: #00c8f0;
+      --accent-dim: rgba(0,200,240,0.12);
+      --accent2: #ff7040;
+      --salao: #b794f4;
+      --salao-dim: rgba(183,148,244,0.12);
+      --estoque: #48e5a0;
+      --estoque-dim: rgba(72,229,160,0.12);
+      --text: #ddeeff;
+      --text-muted: #4a7090;
+      --text-mid: #7a9bb8;
+      --success: #48e5a0;
+      --error: #ff5555;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --header-h: 64px;
+      --sidebar-w: 260px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100dvh; display: flex; flex-direction: column; }
-    body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
-    header { position: sticky; top: 0; z-index: 100; background: rgba(10,15,20,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
-    .app-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-    .app-title span { color: var(--accent); }
-    .app-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
-    .tab-bar { display: flex; gap: 4px; background: var(--surface); border-radius: 8px; padding: 3px; }
-    .tab-btn { background: none; border: none; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.05em; }
-    .tab-btn.active { background: var(--accent); color: var(--bg); font-weight: 700; }
-    main { flex: 1; position: relative; z-index: 1; overflow: hidden; }
-    .view { display: none; padding: 24px 20px; animation: fadeIn 0.25s ease; }
-    .view.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; position: relative; overflow: hidden; }
-    .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-    .form-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.01em; }
-    .form-grid { display: grid; gap: 14px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 
-    /* Custom select */
-    .custom-select { position: relative; }
-    .select-trigger { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 40px 12px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: space-between; user-select: none; min-height: 46px; position: relative; }
-    .select-trigger.placeholder { color: rgba(90,122,148,0.6); }
-    .select-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
-    .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); transition: transform 0.2s; pointer-events: none; }
-    .select-trigger.open .select-arrow { transform: translateY(-50%) rotate(180deg); }
-    .dropdown-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; z-index: 200; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: none; flex-direction: column; max-height: 300px; }
-    .dropdown-panel.open { display: flex; animation: fadeIn 0.15s ease; }
-    .dropdown-search { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .dropdown-search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; }
-    .dropdown-search input:focus { border-color: var(--accent); }
-    .dropdown-search input::placeholder { color: var(--text-muted); opacity: 0.5; }
-    .dropdown-list { overflow-y: auto; flex: 1; }
-    .dropdown-list::-webkit-scrollbar { width: 4px; }
-    .dropdown-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .dropdown-group-label { padding: 8px 14px 4px; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 700; background: rgba(0,212,255,0.05); border-top: 1px solid var(--border); position: sticky; top: 0; }
-    .dropdown-group-label:first-child { border-top: none; }
-    .dropdown-option { padding: 11px 14px; font-size: 13px; cursor: pointer; transition: background 0.15s; color: var(--text); }
-    .dropdown-option:hover { background: rgba(0,212,255,0.08); color: var(--accent); }
-    .dropdown-option.selected { color: var(--accent); font-weight: 500; }
-    .dropdown-option.hidden { display: none; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Medida readonly com destaque */
-    .medida-auto { background: rgba(0,212,255,0.06) !important; border-color: rgba(0,212,255,0.15) !important; color: var(--text-muted) !important; font-size: 13px !important; }
-    .medida-auto.filled { color: var(--accent) !important; border-color: rgba(0,212,255,0.3) !important; }
+    html { height: 100%; }
 
-    .field input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; width: 100%; }
-    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
-    .field input::placeholder { color: var(--text-muted); opacity: 0.5; }
-    #total-display { background: rgba(0,212,255,0.06); border-color: rgba(0,212,255,0.2); color: var(--accent); font-weight: 500; }
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .btn-submit { margin-top: 20px; width: 100%; padding: 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
-    .btn-submit:active { transform: scale(0.98); }
-    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-submit .btn-text { transition: opacity 0.2s; }
-    .btn-submit.loading .btn-text { opacity: 0; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,240,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,240,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Glow top */
+    body::after {
+      content: '';
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 200px;
+      background: radial-gradient(ellipse at center top, rgba(0,200,240,0.06) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===================== LAYOUT ===================== */
+    .app-shell {
+      position: relative; z-index: 1;
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+    }
+
+    /* HEADER */
+    .app-header {
+      position: sticky; top: 0; z-index: 200;
+      height: var(--header-h);
+      background: rgba(8,13,18,0.96);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 24px;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex; align-items: baseline; gap: 6px;
+      flex-shrink: 0;
+    }
+    .brand-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px; font-weight: 700;
+      letter-spacing: -0.02em; color: var(--text);
+    }
+    .brand-name em { color: var(--accent); font-style: normal; }
+    .brand-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; color: var(--text-muted);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 2px 7px; border-radius: 4px;
+    }
+
+    .header-spacer { flex: 1; }
+
+    .tab-bar {
+      display: flex; gap: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 3px;
+    }
+    .tab-btn {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 600;
+      padding: 7px 16px; border-radius: 7px;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.02em; white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--accent); color: var(--bg); font-weight: 700;
+    }
+
+    /* OFFLINE BAR */
+    .offline-bar {
+      background: rgba(255,112,64,0.1);
+      border-bottom: 1px solid rgba(255,112,64,0.2);
+      color: var(--accent2); font-size: 12px;
+      text-align: center; padding: 8px 20px;
+      display: none; position: sticky; top: var(--header-h); z-index: 190;
+    }
+    .offline-bar.show { display: block; }
+
+    /* CONTENT AREA */
+    .app-content {
+      flex: 1;
+      display: flex;
+    }
+
+    /* DESKTOP: sidebar + main */
+    .sidebar {
+      display: none;
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      position: sticky;
+      top: var(--header-h);
+      height: calc(100dvh - var(--header-h));
+      overflow-y: auto;
+      background: rgba(8,13,18,0.6);
+    }
+
+    .sidebar-title {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 12px;
+      padding: 0 8px;
+    }
+
+    .sidebar-cat {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; transition: all 0.15s;
+      margin-bottom: 4px; border: 1px solid transparent;
+    }
+    .sidebar-cat:hover { background: var(--surface2); }
+    .sidebar-cat.active { background: var(--accent-dim); border-color: rgba(0,200,240,0.2); }
+    .sidebar-cat.done { border-color: rgba(72,229,160,0.2); background: rgba(72,229,160,0.05); }
+    .sidebar-cat.partial { border-color: rgba(255,112,64,0.2); background: rgba(255,112,64,0.05); }
+    .sidebar-cat-icon { font-size: 18px; flex-shrink: 0; }
+    .sidebar-cat-info { flex: 1; min-width: 0; }
+    .sidebar-cat-name { font-size: 13px; font-weight: 600; }
+    .sidebar-cat-status { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .sidebar-cat.done .sidebar-cat-status { color: var(--success); }
+    .sidebar-cat.partial .sidebar-cat-status { color: var(--accent2); }
+    .sidebar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+    .sidebar-cat.done .sidebar-dot { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .sidebar-cat.partial .sidebar-dot { background: var(--accent2); }
+
+    .main-area {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* VIEWS */
+    .view { display: none; animation: fadeIn 0.2s ease; flex: 1; }
+    .view.active { display: flex; flex-direction: column; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===================== VIEW: CATEGORIAS ===================== */
+    .cats-header {
+      padding: 28px 32px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cats-header h2 {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+    }
+    .cats-header p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      padding: 24px 32px;
+    }
+
+    .cat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cat-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,200,240,0.04) 0%, transparent 60%);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .cat-card:hover::before { opacity: 1; }
+    .cat-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .cat-card:active { transform: scale(0.97); }
+    .cat-card.done { border-color: rgba(72,229,160,0.3); background: rgba(72,229,160,0.04); }
+    .cat-card.partial { border-color: rgba(255,112,64,0.3); background: rgba(255,112,64,0.04); }
+    .cat-icon { font-size: 32px; line-height: 1; }
+    .cat-name { font-size: 14px; font-weight: 700; letter-spacing: 0.01em; }
+    .cat-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); }
+    .cat-badge {
+      font-size: 10px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; letter-spacing: 0.04em;
+    }
+    .cat-card .cat-badge { background: var(--surface2); color: var(--text-muted); }
+    .cat-card.done .cat-badge { background: rgba(72,229,160,0.15); color: var(--success); }
+    .cat-card.partial .cat-badge { background: rgba(255,112,64,0.15); color: var(--accent2); }
+
+    /* ===================== VIEW: LOCAL ===================== */
+    .step-header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+      position: sticky; top: var(--header-h); z-index: 100;
+      background: rgba(8,13,18,0.97); backdrop-filter: blur(12px);
+    }
+    .btn-back {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-mid);
+      font-size: 16px; width: 38px; height: 38px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.15s;
+    }
+    .btn-back:hover { border-color: var(--border2); color: var(--text); }
+    .step-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+    .step-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .local-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 20px; padding: 32px;
+      max-width: 600px; width: 100%;
+      margin: 0 auto;
+    }
+
+    .local-card {
+      border-radius: var(--radius); padding: 36px 20px;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; border: 2px solid transparent;
+      position: relative; overflow: hidden;
+    }
+    .local-card::after {
+      content: ''; position: absolute; inset: 0;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .local-card:hover::after { opacity: 1; }
+    .local-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+    .local-card:active { transform: scale(0.97); }
+    .local-card.salao {
+      background: var(--salao-dim); border-color: rgba(183,148,244,0.3);
+    }
+    .local-card.salao::after { background: linear-gradient(135deg, rgba(183,148,244,0.05) 0%, transparent 60%); }
+    .local-card.estoque {
+      background: var(--estoque-dim); border-color: rgba(72,229,160,0.3);
+    }
+    .local-card.estoque::after { background: linear-gradient(135deg, rgba(72,229,160,0.05) 0%, transparent 60%); }
+    .local-icon { font-size: 42px; line-height: 1; }
+    .local-name { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
+    .local-card.salao .local-name { color: var(--salao); }
+    .local-card.estoque .local-name { color: var(--estoque); }
+    .local-desc { font-size: 12px; color: var(--text-muted); }
+    .local-pill {
+      font-size: 10px; font-weight: 700; padding: 4px 12px;
+      border-radius: 20px; letter-spacing: 0.06em;
+    }
+    .local-card.salao .local-pill { background: rgba(183,148,244,0.15); color: var(--salao); }
+    .local-card.estoque .local-pill { background: rgba(72,229,160,0.15); color: var(--estoque); }
+
+    /* ===================== VIEW: ITENS ===================== */
+    .mode-strip {
+      padding: 10px 32px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .mode-strip.salao-mode { background: rgba(183,148,244,0.07); color: var(--salao); border-bottom: 1px solid rgba(183,148,244,0.12); }
+    .mode-strip.estoque-mode { background: rgba(72,229,160,0.07); color: var(--estoque); border-bottom: 1px solid rgba(72,229,160,0.12); }
+    .mode-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .mode-strip.salao-mode .mode-dot { background: var(--salao); box-shadow: 0 0 8px var(--salao); }
+    .mode-strip.estoque-mode .mode-dot { background: var(--estoque); box-shadow: 0 0 8px var(--estoque); }
+
+    .items-list {
+      padding: 16px 32px;
+      padding-bottom: 100px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .item-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 16px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .item-row:hover { border-color: var(--border2); }
+    .item-row.filled.salao-mode { border-color: rgba(183,148,244,0.35); background: rgba(183,148,244,0.04); }
+    .item-row.filled.estoque-mode { border-color: rgba(72,229,160,0.35); background: rgba(72,229,160,0.04); }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-name {
+      font-size: 14px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-medida {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text-muted); margin-top: 3px;
+    }
+    .item-prev { font-size: 10px; margin-top: 3px; font-weight: 600; }
+    .item-prev.has-val { color: var(--accent2); }
+
+    .item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .item-input {
+      width: 88px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px; font-weight: 500;
+      text-align: center; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+    .item-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,200,240,0.1); }
+    .item-input.salao-mode:focus { border-color: var(--salao); box-shadow: 0 0 0 3px rgba(183,148,244,0.15); }
+    .item-input.estoque-mode:focus { border-color: var(--estoque); box-shadow: 0 0 0 3px rgba(72,229,160,0.15); }
+    .item-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--accent);
+    }
+
+    /* FLOAT BAR */
+    .float-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      padding: 14px 32px;
+      background: rgba(8,13,18,0.98);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .float-info { flex: 1; display: flex; align-items: center; gap: 16px; }
+    .float-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px; font-weight: 700; line-height: 1;
+    }
+    .float-label { font-size: 12px; color: var(--text-muted); }
+    .float-progress {
+      flex: 1; height: 4px; background: var(--surface3);
+      border-radius: 2px; overflow: hidden; max-width: 200px;
+    }
+    .float-progress-bar { height: 100%; border-radius: 2px; transition: width 0.3s; }
+    .float-progress-bar.salao-mode { background: var(--salao); }
+    .float-progress-bar.estoque-mode { background: var(--estoque); }
+
+    .btn-send {
+      background: var(--accent); color: var(--bg);
+      border: none; border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; font-weight: 700;
+      padding: 14px 28px; cursor: pointer;
+      transition: all 0.2s; position: relative; overflow: hidden;
+      letter-spacing: 0.03em; flex-shrink: 0;
+    }
+    .btn-send.salao-mode { background: var(--salao); }
+    .btn-send.estoque-mode { background: var(--estoque); }
+    .btn-send:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-send:active { transform: scale(0.97); }
+    .btn-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; filter: none; }
+    .btn-send .btn-text { transition: opacity 0.2s; }
+    .btn-send.loading .btn-text { opacity: 0; }
     .spinner { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; }
-    .btn-submit.loading .spinner { display: flex; }
-    .spinner svg { animation: spin 0.8s linear infinite; width: 22px; height: 22px; }
+    .btn-send.loading .spinner { display: flex; }
+    .spinner svg { animation: spin 0.8s linear infinite; width: 20px; height: 20px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; font-size: 13px; font-weight: 500; z-index: 999; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1); white-space: nowrap; }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: var(--success); color: var(--success); }
-    .toast.error { border-color: var(--error); color: var(--error); }
-    .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .history-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
-    .count-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--text-muted); }
-    .btn-clear { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; cursor: pointer; transition: all 0.2s; }
+
+    /* ===================== HISTÓRICO ===================== */
+    .hist-wrap { padding: 28px 32px; padding-bottom: 40px; }
+    .hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .hist-title { font-size: 20px; font-weight: 700; }
+    .count-badge {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3px 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted);
+    }
+    .btn-clear {
+      background: none; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-muted);
+      font-family: 'Space Grotesk', sans-serif; font-size: 12px;
+      padding: 7px 14px; cursor: pointer; transition: all 0.15s;
+    }
     .btn-clear:hover { border-color: var(--error); color: var(--error); }
-    .history-list { display: flex; flex-direction: column; gap: 10px; }
-    .history-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; animation: fadeIn 0.2s ease; }
-    .history-item-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-    .history-item-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
-    .history-item-cat { font-size: 10px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
-    .history-item-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    .history-total { font-size: 18px; font-weight: 500; color: var(--accent); }
-    .history-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-    .chip { background: var(--surface2); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--text-muted); display: flex; gap: 4px; align-items: center; }
-    .chip strong { color: var(--text); font-weight: 500; }
+    .history-list { display: flex; flex-direction: column; gap: 12px; }
+    .history-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+      transition: border-color 0.2s;
+    }
+    .history-item:hover { border-color: var(--border2); }
+    .hi-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .hi-cat { font-size: 16px; font-weight: 700; }
+    .hi-local { font-size: 11px; font-weight: 700; margin-top: 3px; letter-spacing: 0.04em; }
+    .hi-local.salao { color: var(--salao); }
+    .hi-local.estoque { color: var(--estoque); }
+    .hi-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+    .hi-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+    .hi-count { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--accent); }
+    .hi-status { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .status-dot.ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
     .status-dot.error { background: var(--error); }
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-    .empty-state p { font-size: 13px; line-height: 1.6; }
-    .btn-retry { background: none; border: 1px solid var(--accent2); border-radius: 6px; color: var(--accent2); font-family: 'DM Mono', monospace; font-size: 10px; padding: 3px 8px; cursor: pointer; margin-top: 6px; }
-    .offline-bar { background: rgba(255,107,53,0.12); border-bottom: 1px solid rgba(255,107,53,0.25); color: var(--accent2); font-size: 11px; text-align: center; padding: 8px; letter-spacing: 0.06em; display: none; position: relative; z-index: 50; }
-    .offline-bar.show { display: block; }
+    .hi-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hi-chip {
+      background: var(--surface2); border-radius: 6px;
+      padding: 4px 10px; font-size: 11px; color: var(--text-muted);
+    }
+    .hi-chip strong { color: var(--text); font-weight: 600; }
+    .empty-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { font-size: 14px; line-height: 1.7; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 22px;
+      font-size: 14px; font-weight: 600; z-index: 999;
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap; pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: var(--error); color: var(--error); }
+
+    /* ===================== RESPONSIVE ===================== */
+
+    /* TABLET (≥ 640px) */
+    @media (min-width: 640px) {
+      .cat-grid { grid-template-columns: repeat(3, 1fr); }
+      .local-grid { gap: 24px; }
+    }
+
+    /* DESKTOP (≥ 1024px) */
+    @media (min-width: 1024px) {
+      .sidebar { display: flex; flex-direction: column; }
+      .cat-grid { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
+      .cats-header { padding: 32px 40px 20px; }
+      .cat-grid { padding: 28px 40px; }
+      .step-header { padding: 20px 40px; }
+      .mode-strip { padding: 10px 40px; }
+      .items-list { padding: 20px 40px 100px; }
+      .float-bar { padding: 16px 40px; left: var(--sidebar-w); }
+      .hist-wrap { padding: 32px 40px; }
+      /* Items list in 2 columns on large screens */
+      .items-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+    }
+
+    /* WIDE (≥ 1400px) */
+    @media (min-width: 1400px) {
+      :root { --sidebar-w: 300px; }
+      .cat-grid { grid-template-columns: repeat(4, 1fr); max-width: 1100px; }
+      .items-list { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* MOBILE tweaks (< 480px) */
+    @media (max-width: 479px) {
+      .app-header { padding: 0 16px; }
+      .brand-tag { display: none; }
+      .tab-btn { padding: 7px 11px; font-size: 12px; }
+      .cats-header { padding: 20px 16px 12px; }
+      .cat-grid { padding: 16px; gap: 10px; }
+      .step-header { padding: 14px 16px; top: var(--header-h); }
+      .local-grid { padding: 20px 16px; gap: 12px; }
+      .mode-strip { padding: 9px 16px; }
+      .items-list { padding: 12px 16px 100px; }
+      .float-bar { padding: 12px 16px; }
+      .hist-wrap { padding: 20px 16px; }
+      .item-name { font-size: 13px; }
+      .item-input { width: 78px; font-size: 15px; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   </style>
 </head>
 <body>
-<div class="offline-bar" id="offlineBar">⚠ SEM CONEXÃO — dados salvos localmente</div>
-<header>
-  <div>
-    <div class="app-title">ESTOQUE<span>.</span></div>
-    <div class="app-sub">Controle de inventário</div>
-  </div>
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('form')">LANÇAR</button>
-    <button class="tab-btn" onclick="switchTab('history')">HISTÓRICO</button>
-  </div>
-</header>
-<main>
-  <div class="view active" id="view-form">
-    <div class="form-card">
-      <div class="form-title">Novo lançamento</div>
-      <div class="form-grid">
-        <!-- CATEGORIA -->
-        <div class="field">
-          <label>Categoria</label>
-          <div class="custom-select" id="sel-categoria">
-            <div class="select-trigger placeholder" id="trigger-categoria" onclick="toggleDropdown('categoria')">
-              <span id="label-categoria">Selecione a categoria</span>
-              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            <div class="dropdown-panel" id="panel-categoria">
-              <div class="dropdown-search"><input type="text" placeholder="Buscar categoria..." oninput="filterDropdown('categoria', this.value)" /></div>
-              <div class="dropdown-list" id="list-categoria"></div>
-            </div>
-          </div>
-        </div>
-        <!-- ITEM -->
-        <div class="field">
-          <label>Item</label>
-          <div class="custom-select" id="sel-item">
-            <div class="select-trigger placeholder" id="trigger-item" onclick="toggleDropdown('item')">
-              <span id="label-item">Selecione o item</span>
-              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            <div class="dropdown-panel" id="panel-item">
-              <div class="dropdown-search"><input type="text" placeholder="Buscar item..." oninput="filterDropdown('item', this.value)" /></div>
-              <div class="dropdown-list" id="list-item"><div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div></div>
-            </div>
-          </div>
-        </div>
-        <!-- MEDIDA (auto) -->
-        <div class="field">
-          <label>Medida <span style="color:var(--accent);font-size:9px;margin-left:4px">● AUTO</span></label>
-          <input id="f-medida" type="text" class="medida-auto" readonly placeholder="Preenchido automaticamente" tabindex="-1" />
-        </div>
-        <!-- SALÃO + ESTOQUE -->
-        <div class="row-2">
-          <div class="field">
-            <label>Salão</label>
-            <input id="f-salao" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
-          </div>
-          <div class="field">
-            <label>Estoque</label>
-            <input id="f-estoque" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="0" />
-          </div>
-        </div>
-        <!-- TOTAL -->
-        <div class="field">
-          <label>Total (automático)</label>
-          <input id="total-display" type="text" readonly placeholder="—" tabindex="-1" />
-        </div>
-      </div>
-      <button class="btn-submit" id="btnSubmit" onclick="submitForm()">
-        <span class="btn-text">ENVIAR PARA PLANILHA</span>
-        <span class="spinner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
-        </span>
-      </button>
-    </div>
-  </div>
+<div class="app-shell">
 
-  <div class="view" id="view-history">
-    <div class="history-header">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="history-title">Histórico</span>
-        <span class="count-badge" id="countBadge">0</span>
-      </div>
-      <button class="btn-clear" onclick="clearHistory()">Limpar</button>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-name">ESTOQUE<em>.</em></div>
+      <div class="brand-tag">CMV</div>
     </div>
-    <div class="history-list" id="historyList"></div>
-  </div>
-</main>
+    <div class="header-spacer"></div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('contagem')">CONTAGEM</button>
+      <button class="tab-btn" onclick="switchTab('historico')">HISTÓRICO</button>
+    </div>
+  </header>
+
+  <div class="offline-bar" id="offlineBar">⚠ SEM CONEXÃO — os dados serão salvos localmente</div>
+
+  <div class="app-content">
+
+    <!-- SIDEBAR (desktop only) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-title">Categorias</div>
+      <div id="sidebarCats"></div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-area">
+
+      <!-- VIEW: CATEGORIAS -->
+      <div class="view active" id="view-categorias">
+        <div class="cats-header">
+          <h2>Selecione a categoria</h2>
+          <p>Escolha uma categoria para iniciar a contagem</p>
+        </div>
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+
+      <!-- VIEW: LOCAL -->
+      <div class="view" id="view-local">
+        <div class="step-header">
+          <button class="btn-back" onclick="goBack('categorias')">←</button>
+          <div>
+            <div class="step-title" id="local-cat-title"></div>
+            <div class="step-sub">Onde está fazendo a contagem?</div>
+          </div>
+        </div>
+        <div class="local-grid">
+          <div class="local-card salao" onclick="selectLocal('salao')">
+            <div class="local-icon">🍽️</div>
+            <div class="local-name">SALÃO</div>
+            <div class="local-desc">Itens no salão / frente</div>
+            <div class="local-pill">1ª CONTAGEM</div>
+          </div>
+          <div class="local-card estoque" onclick="selectLocal('estoque')">
+            <div class="local-icon">📦</div>
+            <div class="local-name">ESTOQUE</div>
+            <div class="local-desc">Itens no depósito / fundo</div>
+            <div class="local-pill">2ª CONTAGEM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: ITENS -->
+      <div class="view" id="view-itens">
+        <div class="step-header">
+          <button class="btn-back" onclick="goBack('local')">←</button>
+          <div>
+            <div class="step-title" id="itens-cat-title"></div>
+            <div class="step-sub" id="itens-sub"></div>
+          </div>
+        </div>
+        <div class="mode-strip" id="modeStrip">
+          <div class="mode-dot"></div>
+          <span id="modeLabel"></span>
+        </div>
+        <div class="items-list" id="itemsList"></div>
+        <div class="float-bar">
+          <div class="float-info">
+            <div>
+              <div class="float-num" id="floatNum">0</div>
+              <div class="float-label">itens preenchidos</div>
+            </div>
+            <div class="float-progress" id="floatProgress">
+              <div class="float-progress-bar" id="floatBar" style="width:0%"></div>
+            </div>
+          </div>
+          <button class="btn-send" id="btnSend" onclick="enviarContagem()">
+            <span class="btn-text">ENVIAR CONTAGEM</span>
+            <span class="spinner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW: HISTÓRICO -->
+      <div class="view" id="view-historico">
+        <div class="hist-wrap">
+          <div class="hist-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="hist-title">Histórico</span>
+              <span class="count-badge" id="countBadge">0</span>
+            </div>
+            <button class="btn-clear" onclick="clearHistory()">Limpar tudo</button>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </div>
+
+    </div><!-- /main-area -->
+  </div><!-- /app-content -->
+</div><!-- /app-shell -->
+
 <div class="toast" id="toast"></div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLSxBlTzylaiZunVjuggzP_xoULoRl5-aELevEbFtpcU6r7CQaCcWf5gXQP0bMTiXamQ/exec";
 const STORAGE_KEY = "estoque_history";
+const CONTAGEM_KEY = "estoque_contagem";
 
 const DADOS = {
-  "BEBIDAS": {
-    "COCA COLA LATA":"UNIDADE","COCA COLA ZERO LATA":"UNIDADE","GUARANA":"UNIDADE",
-    "GUARANÁ ZERO":"UNIDADE","AGUA SEM GÁS":"UNIDADE","AGUA COM GÁS":"UNIDADE",
-    "STELLA 330ML":"UNIDADE","SPATEN":"UNIDADE","MATE NATURAL/ LIMÃO":"UNIDADE",
-    "ICE TEA":"UNIDADE","H2O":"UNIDADE","H2O LIMONETO":"UNIDADE",
-    "AGUA TONICA":"UNIDADE","STELLA PURE GOLD":"UNIDADE","DEL VALLE UVA":"UNIDADE"
-  },
-  "COZINHA": {
-    "MASSA DE PASTEL 37":"CX C/ 20","CATUPIRY":"UNID","QUEIJO MINAS":"KG/UNID",
-    "QUEIJO PARMESÃO":"KG/UNID","FARINHA PANKO":"KG CX COM 12","FARINHA DE TRIGO":"KG",
-    "AZEITE EXTRA VIRGEM":"5LT","AZEITE MISTO":"5LT","Farinha de Rosca":"500gr",
-    "OLEO SOJA":"900ML","MUÇARELA":"KG","MOLHO DE TOMATE":"PACOTE",
-    "VINHO BRANCO":"5LT","MOLHO INGLES":"LT","AZEITONA VERDE FAT":"BALDE",
-    "PAPRICA MISTURADA":"KG","PAPRICA PICANTE":"POTE 750GR","PAPRICA DOCE":"POTE 750GR",
-    "AÇAFRÃO":"POTE 750GR","LEITE DE COCO":"1LT","AZEITE DE DENDÊ":"500ML",
-    "ARROZ PARBOILIZADO":"5KG","SAL":"KG","ERVILHA":"KG","PIMENTA DO REINO":"KG",
-    "ERVAS FINAS":"KG","MEL":"BISNAGA","MOSTARDA AMARELA":"UNID","KETCHUP 3,2kg":"UNID",
-    "CHAMPIGNON":"BALDE","ALCAPARRAS":"BALDE","AZEITONA PRETA FAT":"BALDE",
-    "CREME DE LEITE 1LT 17%":"UNIDADE","FARINHA DE MANDIOCA":"KG","MANTEIGA SEM SAL":"BLOCO 5KG",
-    "MAIONESE 2,8":"BALDE","CALDO DE GALINHA":"KG","COLORAL":"KG",
-    "BATATA FRITA 7MM":"PORÇÃO 200GR","DOMEQ OU PRESIDENT":"GARRAFA","VINAGRE ALCOOL":"GARRAFA",
-    "LEITE":"LT","BICABORNATO":"KG","PALMITO 2kg":"VIDRO","AÇUCAR":"KG",
-    "BACON FATIADO":"KG","PÃO DE BURGUER":"PCT","LEITE CONDENSADO":"UNID",
-    "SPAGUETTI GRAN DURO":"KG","CAFÉ":"KG"
-  },
-  "DESCARTAVEL": {
-    "GUARDANAPO SACHET":"CX","PAPEL TOALHA":"PCT C/2","COPO DESCARTAVEL":"PCT 50UNID",
-    "CANUDO":"PCT","CAIXA DE LUVA G":"CX","SAL SACHET":"CX",
-    "SACO DE TALHER KRAFT":"PACOTE 100","TOUCA DE COZINHA":"PCT","GARFO DE MADEIRA":"PCT",
-    "SACO VIAGEM KRAFT":"PCT 50UNID","FILME PVC":"UNIDADE","BOBINA IMPRESSORA":"UNIDADE",
-    "POTE PRAFESTA 1500":"PACOTE 10","POTE PRAFESTA 500ml":"PACOTE","POTE MOLHO C/TAMPA 30ML":"UNIDADE",
-    "ETIQUETA DE VALIDADE":"ROLO","BOBINA 20X30":"UNIDADE","BOBINA 30X40":"UNIDADE",
-    "BOBINA 40X60":"UNIDADE","saco vacuo 20x30":"UNIDADE","POTE 75 ML":"PCT 50UNID",
-    "TAMPA 75ML":"PCT 50UNID","FORMA DE PUDIM":"PCT 10 UNID","QUENTINHA DELIVERY":"PCT 50UNID",
-    "Bowl 600ml":"UNIDADE","Bowl 1100ml":"UNIDADE","Kraft Multiuso 1000ml":"UNIDADE",
-    "Kraft Multiuso 600ml":"UNIDADE","Pote 150ml kraft":"UNIDADE"
-  },
-  "HORTIFRUTI": {
-    "ALHO DESCASCADO":"KG","ALHO PORÓ":"ML 12","TOMATE":"KG","CEBOLA":"KG",
-    "PIMENTÃO VERDE":"KG","PIMENTÃO VERMELHO":"KG","SALSA CRESPA":"ML","COENTRO":"ML",
-    "MIX DE PIMENTA":"KG","MAÇÃ VERDE":"KG","AIPIM":"KG","LIMÃO":"KG",
-    "CENOURA":"KG","COUVE FLOR":"KG","BROCOLIS NACIONAL":"UNIDADE","BROCOLIS AMERICANO":"UNIDADE",
-    "ALFACE LISA":"UNIDADE","OVOS":"UNIDADE","ALFACE ROXA":"UNIDADE","ALFACE CRESPA":"UNIDADE",
-    "TOMATE CEREJA":"BANDEIJAS","PICLES":"KG","BATATA LISA":"KG","ABOBRINHA":"KG",
-    "BATATA ASTERIX":"KG","CEBOLA ROXA":"KG","MIX DE LEGUMES":"UNID"
-  },
-  "LIMPEZA": {
-    "PAPEL INTERFOLHA":"FARDO COM 3","SABONETE LIQUIDO":"UNIDADE","ALCOOL 70":"UNIDADE",
-    "CLORO":"BB 5LT","DETERGENTE":"BB 5LT","VIPER GRILL":"BB 5LT",
-    "DESINFETANTE HORTIFRUTI":"POTE 1KG","ESPONJA":"UNIDADE/5","FIBRAÇO":"PCT/6",
-    "LUVA LATEX":"UNIDADE/PAR","PANO DE CHÃO":"UNIDADE","PERFEX":"ROLO",
-    "SACO DE LIXO 200LT":"PACOTE 100","CIF":"UNIDADE","DETERGENTE KALY":"BB 5LT",
-    "DETERGENTE CLORADO":"BB 5LT","DESENCRUSTANTE C212":"BB 5LT","DESENGORDURANTE AL":"BB 5LT",
-    "ALCOOL GEL H180":"SACHE","SABONETE H170":"BB 5LT"
-  },
-  "PEIXES": {
-    "CAMARÃO PASTEL 61/70":"KG","CARNE DE SIRI":"KG","LULA TUBO 175GR":"UNIDADE",
-    "LULA ROXA 100GR":"UNIDADE","FILÉ DE TILAPIA 200GR":"UNIDADE","FILÉ DE PANGA":"KG",
-    "SALMÃO FILÉ 250GR":"UNIDADE","POLVO COZIDO 100GR":"UNIDADE","FILÉ DE GAROUPA 250GR":"UNIDADE",
-    "CAMARÃO G INTEIRO":"KG","CAMARÃO 125GR":"UNIDADE","CAMARÃO 220GR":"UNIDADE",
-    "CAMARÃO RABINHO":"KG","FILÉ DE LINGUADO":"KG","BACALHAU POSTA/LOMBO":"KG",
-    "MEDALHÃO DE ATUM":"KG","MEDALHÃO DE SALMÃO":"KG","MANJUBINHA":"300GR","SARDINHA":"6 UNID"
-  }
+  "BEBIDAS": {"COCA COLA LATA":"UNIDADE","COCA COLA ZERO LATA":"UNIDADE","GUARANA":"UNIDADE","GUARANÁ ZERO":"UNIDADE","AGUA SEM GÁS":"UNIDADE","AGUA COM GÁS":"UNIDADE","STELLA 330ML":"UNIDADE","SPATEN":"UNIDADE","MATE NATURAL/ LIMÃO":"UNIDADE","ICE TEA":"UNIDADE","H2O":"UNIDADE","H2O LIMONETO":"UNIDADE","AGUA TONICA":"UNIDADE","STELLA PURE GOLD":"UNIDADE","DEL VALLE UVA":"UNIDADE"},
+  "COZINHA": {"MASSA DE PASTEL 37":"CX C/ 20","CATUPIRY":"UNID","QUEIJO MINAS":"KG/UNID","QUEIJO PARMESÃO":"KG/UNID","FARINHA PANKO":"KG CX COM 12","FARINHA DE TRIGO":"KG","AZEITE EXTRA VIRGEM":"5LT","AZEITE MISTO":"5LT","Farinha de Rosca":"500gr","OLEO SOJA":"900ML","MUÇARELA":"KG","MOLHO DE TOMATE":"PACOTE","VINHO BRANCO":"5LT","MOLHO INGLES":"LT","AZEITONA VERDE FAT":"BALDE","PAPRICA MISTURADA":"KG","PAPRICA PICANTE":"POTE 750GR","PAPRICA DOCE":"POTE 750GR","AÇAFRÃO":"POTE 750GR","LEITE DE COCO":"1LT","AZEITE DE DENDÊ":"500ML","ARROZ PARBOILIZADO":"5KG","SAL":"KG","ERVILHA":"KG","PIMENTA DO REINO":"KG","ERVAS FINAS":"KG","MEL":"BISNAGA","MOSTARDA AMARELA":"UNID","KETCHUP 3,2kg":"UNID","CHAMPIGNON":"BALDE","ALCAPARRAS":"BALDE","AZEITONA PRETA FAT":"BALDE","CREME DE LEITE 1LT 17%":"UNIDADE","FARINHA DE MANDIOCA":"KG","MANTEIGA SEM SAL":"BLOCO 5KG","MAIONESE 2,8":"BALDE","CALDO DE GALINHA":"KG","COLORAL":"KG","BATATA FRITA 7MM":"PORÇÃO 200GR","DOMEQ OU PRESIDENT":"GARRAFA","VINAGRE ALCOOL":"GARRAFA","LEITE":"LT","BICABORNATO":"KG","PALMITO 2kg":"VIDRO","AÇUCAR":"KG","BACON FATIADO":"KG","PÃO DE BURGUER":"PCT","LEITE CONDENSADO":"UNID","SPAGUETTI GRAN DURO":"KG","CAFÉ":"KG"},
+  "DESCARTAVEL": {"GUARDANAPO SACHET":"CX","PAPEL TOALHA":"PCT C/2","COPO DESCARTAVEL":"PCT 50UNID","CANUDO":"PCT","CAIXA DE LUVA G":"CX","SAL SACHET":"CX","SACO DE TALHER KRAFT":"PACOTE 100","TOUCA DE COZINHA":"PCT","GARFO DE MADEIRA":"PCT","SACO VIAGEM KRAFT":"PCT 50UNID","FILME PVC":"UNIDADE","BOBINA IMPRESSORA":"UNIDADE","POTE PRAFESTA 1500":"PACOTE 10","POTE PRAFESTA 500ml":"PACOTE","POTE MOLHO C/TAMPA 30ML":"UNIDADE","ETIQUETA DE VALIDADE":"ROLO","BOBINA 20X30":"UNIDADE","BOBINA 30X40":"UNIDADE","BOBINA 40X60":"UNIDADE","saco vacuo 20x30":"UNIDADE","POTE 75 ML":"PCT 50UNID","TAMPA 75ML":"PCT 50UNID","FORMA DE PUDIM":"PCT 10 UNID","QUENTINHA DELIVERY":"PCT 50UNID","Bowl 600ml":"UNIDADE","Bowl 1100ml":"UNIDADE","Kraft Multiuso 1000ml":"UNIDADE","Kraft Multiuso 600ml":"UNIDADE","Pote 150ml kraft":"UNIDADE"},
+  "HORTIFRUTI": {"ALHO DESCASCADO":"KG","ALHO PORÓ":"ML 12","TOMATE":"KG","CEBOLA":"KG","PIMENTÃO VERDE":"KG","PIMENTÃO VERMELHO":"KG","SALSA CRESPA":"ML","COENTRO":"ML","MIX DE PIMENTA":"KG","MAÇÃ VERDE":"KG","AIPIM":"KG","LIMÃO":"KG","CENOURA":"KG","COUVE FLOR":"KG","BROCOLIS NACIONAL":"UNIDADE","BROCOLIS AMERICANO":"UNIDADE","ALFACE LISA":"UNIDADE","OVOS":"UNIDADE","ALFACE ROXA":"UNIDADE","ALFACE CRESPA":"UNIDADE","TOMATE CEREJA":"BANDEIJAS","PICLES":"KG","BATATA LISA":"KG","ABOBRINHA":"KG","BATATA ASTERIX":"KG","CEBOLA ROXA":"KG","MIX DE LEGUMES":"UNID"},
+  "LIMPEZA": {"PAPEL INTERFOLHA":"FARDO COM 3","SABONETE LIQUIDO":"UNIDADE","ALCOOL 70":"UNIDADE","CLORO":"BB 5LT","DETERGENTE":"BB 5LT","VIPER GRILL":"BB 5LT","DESINFETANTE HORTIFRUTI":"POTE 1KG","ESPONJA":"UNIDADE/5","FIBRAÇO":"PCT/6","LUVA LATEX":"UNIDADE/PAR","PANO DE CHÃO":"UNIDADE","PERFEX":"ROLO","SACO DE LIXO 200LT":"PACOTE 100","CIF":"UNIDADE","DETERGENTE KALY":"BB 5LT","DETERGENTE CLORADO":"BB 5LT","DESENCRUSTANTE C212":"BB 5LT","DESENGORDURANTE AL":"BB 5LT","ALCOOL GEL H180":"SACHE","SABONETE H170":"BB 5LT"},
+  "PEIXES": {"CAMARÃO PASTEL 61/70":"KG","CARNE DE SIRI":"KG","LULA TUBO 175GR":"UNIDADE","LULA ROXA 100GR":"UNIDADE","FILÉ DE TILAPIA 200GR":"UNIDADE","FILÉ DE PANGA":"KG","SALMÃO FILÉ 250GR":"UNIDADE","POLVO COZIDO 100GR":"UNIDADE","FILÉ DE GAROUPA 250GR":"UNIDADE","CAMARÃO G INTEIRO":"KG","CAMARÃO 125GR":"UNIDADE","CAMARÃO 220GR":"UNIDADE","CAMARÃO RABINHO":"KG","FILÉ DE LINGUADO":"KG","BACALHAU POSTA/LOMBO":"KG","MEDALHÃO DE ATUM":"KG","MEDALHÃO DE SALMÃO":"KG","MANJUBINHA":"300GR","SARDINHA":"6 UNID"}
 };
 
+const CAT_ICONS = {"BEBIDAS":"🥤","COZINHA":"🍳","DESCARTAVEL":"🧻","HORTIFRUTI":"🥦","LIMPEZA":"🧹","PEIXES":"🐟"};
 const CATEGORIAS = Object.keys(DADOS);
-let selectedCategoria = '';
-let selectedItem = '';
-let openDropdown = null;
 
-function buildCategoriaList() {
-  const list = document.getElementById('list-categoria');
-  list.innerHTML = CATEGORIAS.map(cat =>
-    `<div class="dropdown-option" data-value="${cat}" onclick="selectCategoria('${cat}')">${cat}</div>`
-  ).join('');
+let currentCat = '';
+let currentLocal = '';
+
+function getContagem() { try { return JSON.parse(localStorage.getItem(CONTAGEM_KEY)) || {}; } catch { return {}; } }
+function saveContagem(c) { localStorage.setItem(CONTAGEM_KEY, JSON.stringify(c)); }
+
+function getCatStatus(cat) {
+  const c = getContagem()[cat];
+  if (!c) return 'vazio';
+  const itens = Object.keys(DADOS[cat]);
+  let temSalao = false, temEstoque = false;
+  itens.forEach(i => { if(c[i]?.salao > 0) temSalao = true; if(c[i]?.estoque > 0) temEstoque = true; });
+  if (temSalao && temEstoque) return 'completo';
+  if (temSalao || temEstoque) return 'parcial';
+  return 'vazio';
 }
 
-function buildItemList(categoria) {
-  const list = document.getElementById('list-item');
-  if (!categoria) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Selecione uma categoria primeiro</div>';
-    return;
-  }
-  const items = Object.keys(DADOS[categoria]);
-  list.innerHTML = items.map(item =>
-    `<div class="dropdown-option" data-value="${item}" onclick="selectItem(this)">${item}</div>`
-  ).join('');
-}
+function buildCatGrid() {
+  const grid = document.getElementById('catGrid');
+  const sidebar = document.getElementById('sidebarCats');
+  grid.innerHTML = '';
+  sidebar.innerHTML = '';
 
-function toggleDropdown(which) {
-  const panel = document.getElementById('panel-' + which);
-  const trigger = document.getElementById('trigger-' + which);
-  const isOpen = panel.classList.contains('open');
-  closeAllDropdowns();
-  if (!isOpen) {
-    panel.classList.add('open');
-    trigger.classList.add('open');
-    openDropdown = which;
-    const si = panel.querySelector('input');
-    if (si) setTimeout(() => si.focus(), 50);
-  }
-}
+  CATEGORIAS.forEach(cat => {
+    const status = getCatStatus(cat);
+    const statusText = status === 'completo' ? '✓ Completo' : status === 'parcial' ? '⚡ Em andamento' : 'Pendente';
+    const count = Object.keys(DADOS[cat]).length;
 
-function closeAllDropdowns() {
-  document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.remove('open'));
-  document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('open'));
-  openDropdown = null;
+    // Main grid card
+    const card = document.createElement('div');
+    card.className = 'cat-card ' + (status === 'completo' ? 'done' : status === 'parcial' ? 'partial' : '');
+    card.innerHTML = `
+      <div class="cat-icon">${CAT_ICONS[cat]||'📦'}</div>
+      <div class="cat-name">${cat}</div>
+      <div class="cat-count">${count} itens</div>
+      <div class="cat-badge">${statusText}</div>`;
+    card.onclick = () => selectCategoria(cat);
+    grid.appendChild(card);
+
+    // Sidebar item
+    const sb = document.createElement('div');
+    sb.className = 'sidebar-cat ' + (status === 'completo' ? 'done' : status === 'parcial' ? 'partial' : '');
+    sb.innerHTML = `
+      <div class="sidebar-cat-icon">${CAT_ICONS[cat]||'📦'}</div>
+      <div class="sidebar-cat-info">
+        <div class="sidebar-cat-name">${cat}</div>
+        <div class="sidebar-cat-status">${statusText}</div>
+      </div>
+      <div class="sidebar-dot"></div>`;
+    sb.onclick = () => selectCategoria(cat);
+    sidebar.appendChild(sb);
+  });
 }
 
 function selectCategoria(cat) {
-  selectedCategoria = cat;
-  selectedItem = '';
-  document.getElementById('label-categoria').textContent = cat;
-  document.getElementById('trigger-categoria').classList.remove('placeholder');
-  document.getElementById('label-item').textContent = 'Selecione o item';
-  document.getElementById('trigger-item').classList.add('placeholder');
-  // clear medida
-  const m = document.getElementById('f-medida');
-  m.value = '';
-  m.classList.remove('filled');
-  buildItemList(cat);
-  closeAllDropdowns();
-}
-
-function selectItem(el) {
-  const item = el.dataset.value;
-  selectedItem = item;
-  document.getElementById('label-item').textContent = item;
-  document.getElementById('trigger-item').classList.remove('placeholder');
-  // Auto-fill medida
-  const medida = DADOS[selectedCategoria][item] || '';
-  const m = document.getElementById('f-medida');
-  m.value = medida;
-  m.classList.toggle('filled', !!medida);
-  closeAllDropdowns();
-  // Focus salao
-  setTimeout(() => document.getElementById('f-salao').focus(), 100);
-}
-
-function filterDropdown(which, query) {
-  const q = query.toLowerCase();
-  document.getElementById('list-' + which).querySelectorAll('.dropdown-option').forEach(opt => {
-    opt.classList.toggle('hidden', !opt.dataset.value.toLowerCase().includes(q));
+  currentCat = cat;
+  document.getElementById('local-cat-title').textContent = cat;
+  // Highlight sidebar
+  document.querySelectorAll('.sidebar-cat').forEach((el, i) => {
+    el.classList.toggle('active', CATEGORIAS[i] === cat);
   });
+  showView('local');
 }
 
-document.addEventListener('click', e => {
-  if (!e.target.closest('.custom-select')) closeAllDropdowns();
-});
-
-['f-salao','f-estoque'].forEach(id => {
-  document.getElementById(id).addEventListener('input', calcTotal);
-});
-
-function calcTotal() {
-  const s = parseFloat(document.getElementById('f-salao').value) || 0;
-  const e = parseFloat(document.getElementById('f-estoque').value) || 0;
-  const t = s + e;
-  document.getElementById('total-display').value = t > 0 ? t : '';
+function selectLocal(local) {
+  currentLocal = local;
+  document.getElementById('itens-cat-title').textContent = currentCat;
+  document.getElementById('itens-sub').textContent = local === 'salao' ? '🍽️ Contagem do Salão' : '📦 Contagem do Estoque';
+  const strip = document.getElementById('modeStrip');
+  strip.className = 'mode-strip ' + local + '-mode';
+  document.getElementById('modeLabel').textContent = local === 'salao' ? 'MODO SALÃO — digitando quantidades do salão' : 'MODO ESTOQUE — digitando quantidades do depósito';
+  const btn = document.getElementById('btnSend');
+  btn.className = 'btn-send ' + local + '-mode';
+  const bar = document.getElementById('floatBar');
+  bar.className = 'float-progress-bar ' + local + '-mode';
+  buildItemsList();
+  showView('itens');
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', (i===0&&tab==='form')||(i===1&&tab==='history'));
+function buildItemsList() {
+  const contagem = getContagem();
+  const catContagem = contagem[currentCat] || {};
+  const itens = Object.keys(DADOS[currentCat]);
+  const list = document.getElementById('itemsList');
+  const modeClass = currentLocal + '-mode';
+
+  list.innerHTML = itens.map(item => {
+    const medida = DADOS[currentCat][item];
+    const vals = catContagem[item] || {};
+    const valorAtual = currentLocal === 'salao' ? (vals.salao || '') : (vals.estoque || '');
+    const outroLocal = currentLocal === 'salao' ? 'estoque' : 'salao';
+    const outroVal = vals[outroLocal] || 0;
+    const total = (parseFloat(valorAtual)||0) + outroVal;
+    const isFilled = valorAtual !== '' && Number(valorAtual) > 0;
+    const safeId = 'row-' + item.replace(/[^a-zA-Z0-9]/g,'_');
+
+    return `
+      <div class="item-row ${isFilled ? 'filled '+modeClass : ''}" id="${safeId}">
+        <div class="item-info">
+          <div class="item-name">${item}</div>
+          <div class="item-medida">${medida}</div>
+          ${outroVal > 0 ? `<div class="item-prev has-val">+ ${outroVal} do ${outroLocal}</div>` : ''}
+        </div>
+        <div class="item-right">
+          <input class="item-input ${modeClass}" type="tel" inputmode="numeric" pattern="[0-9]*"
+            placeholder="0" value="${valorAtual}"
+            data-item="${item}"
+            oninput="onItemInput(this)"
+            onfocus="this.select()" />
+          ${outroVal > 0 ? `<div class="item-total">= ${total > 0 ? total : '—'}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  updateFloatCount();
+}
+
+function onItemInput(input) {
+  const item = input.dataset.item;
+  const val = parseFloat(input.value) || 0;
+  const contagem = getContagem();
+  if (!contagem[currentCat]) contagem[currentCat] = {};
+  if (!contagem[currentCat][item]) contagem[currentCat][item] = {};
+  contagem[currentCat][item][currentLocal] = val;
+  saveContagem(contagem);
+
+  const safeId = 'row-' + item.replace(/[^a-zA-Z0-9]/g,'_');
+  const row = document.getElementById(safeId);
+  if (row) {
+    row.className = 'item-row ' + (val > 0 ? 'filled ' + currentLocal + '-mode' : '');
+    const outroLocal = currentLocal === 'salao' ? 'estoque' : 'salao';
+    const outroVal = contagem[currentCat][item][outroLocal] || 0;
+    const total = val + outroVal;
+    let totalEl = row.querySelector('.item-total');
+    if (outroVal > 0) {
+      if (!totalEl) {
+        totalEl = document.createElement('div');
+        totalEl.className = 'item-total';
+        row.querySelector('.item-right').appendChild(totalEl);
+      }
+      totalEl.textContent = '= ' + (total > 0 ? total : '—');
+    }
+  }
+  updateFloatCount();
+}
+
+function updateFloatCount() {
+  const contagem = getContagem();
+  const catContagem = contagem[currentCat] || {};
+  const total = Object.keys(DADOS[currentCat]).length;
+  let count = 0;
+  Object.keys(DADOS[currentCat]).forEach(item => {
+    const val = catContagem[item]?.[currentLocal];
+    if (val !== undefined && val > 0) count++;
   });
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-'+tab).classList.add('active');
-  if (tab === 'history') renderHistory();
+  document.getElementById('floatNum').textContent = count;
+  const pct = total > 0 ? (count / total * 100) : 0;
+  document.getElementById('floatBar').style.width = pct + '%';
 }
 
-function updateOnlineStatus() {
-  document.getElementById('offlineBar').classList.toggle('show', !navigator.onLine);
+async function enviarContagem() {
+  const contagem = getContagem();
+  const catContagem = contagem[currentCat] || {};
+  const itens = Object.keys(DADOS[currentCat]);
+  const itensPreencher = itens.filter(item => (catContagem[item]?.[currentLocal] || 0) > 0);
+
+  if (itensPreencher.length === 0) { showToast('Preencha pelo menos um item', 'error'); return; }
+
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.classList.add('loading');
+
+  let enviados = 0, erros = 0;
+  const registros = [];
+
+  for (const item of itensPreencher) {
+    const vals = catContagem[item] || {};
+    const salao = vals.salao || 0;
+    const estoque = vals.estoque || 0;
+    const total = salao + estoque;
+    const medida = DADOS[currentCat][item];
+    try {
+      await enviarDados({ item, medida, salao, estoque, total });
+      enviados++; registros.push({ item, total, status: 'ok' });
+    } catch {
+      erros++; registros.push({ item, total, status: 'erro' });
+    }
+  }
+
+  saveHistory({ categoria: currentCat, local: currentLocal, itens: registros, ts: Date.now(), synced: erros === 0 });
+  btn.disabled = false; btn.classList.remove('loading');
+
+  if (erros === 0) {
+    showToast(`✓ ${enviados} itens enviados com sucesso!`, 'success');
+    const c = getContagem();
+    if (c[currentCat]) {
+      Object.keys(c[currentCat]).forEach(item => { if (c[currentCat][item]) c[currentCat][item][currentLocal] = 0; });
+      saveContagem(c);
+    }
+    showView('categorias');
+    buildCatGrid();
+  } else {
+    showToast(`${enviados} enviados · ${erros} com falha`, 'error');
+  }
 }
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-updateOnlineStatus();
 
 function enviarDados(payload) {
   return new Promise((resolve, reject) => {
@@ -391,92 +870,79 @@ function enviarDados(payload) {
   });
 }
 
-async function submitForm() {
-  if (!selectedItem) { showToast('Selecione um item', 'error'); return; }
-  const medida  = document.getElementById('f-medida').value.trim();
-  const salao   = parseFloat(document.getElementById('f-salao').value) || 0;
-  const estoque = parseFloat(document.getElementById('f-estoque').value) || 0;
-  const total   = salao + estoque;
-  const btn = document.getElementById('btnSubmit');
-  btn.disabled = true; btn.classList.add('loading');
-  const record = { categoria: selectedCategoria, item: selectedItem, medida, salao, estoque, total, ts: Date.now(), synced: false };
-  saveLocal(record);
-  try {
-    await enviarDados({ item: selectedItem, medida, salao, estoque, total });
-    record.synced = true; updateLocalRecord(record);
-    showToast('✓ Enviado para a planilha!', 'success'); clearForm();
-  } catch(err) { showToast('Salvo localmente (sem conexão)', 'error'); }
-  btn.disabled = false; btn.classList.remove('loading');
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
 }
 
-function clearForm() {
-  selectedCategoria = ''; selectedItem = '';
-  document.getElementById('label-categoria').textContent = 'Selecione a categoria';
-  document.getElementById('trigger-categoria').classList.add('placeholder');
-  document.getElementById('label-item').textContent = 'Selecione o item';
-  document.getElementById('trigger-item').classList.add('placeholder');
-  const m = document.getElementById('f-medida'); m.value = ''; m.classList.remove('filled');
-  buildItemList('');
-  ['f-salao','f-estoque'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('total-display').value = '';
+function goBack(to) {
+  showView(to === 'categorias' ? 'categorias' : 'local');
+  if (to === 'categorias') buildCatGrid();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0&&tab==='contagem')||(i===1&&tab==='historico'));
+  });
+  if (tab === 'contagem') { showView('categorias'); buildCatGrid(); }
+  else { showView('historico'); renderHistory(); }
 }
 
 function getHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
-function saveLocal(r) { const h = getHistory(); h.unshift(r); localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0,200))); }
-function updateLocalRecord(r) { const h = getHistory(); const i = h.findIndex(x => x.ts===r.ts); if(i!==-1){h[i]=r; localStorage.setItem(STORAGE_KEY,JSON.stringify(h));} }
+function saveHistory(r) { const h = getHistory(); h.unshift(r); localStorage.setItem(STORAGE_KEY, JSON.stringify(h.slice(0,100))); }
 
 function renderHistory() {
   const h = getHistory();
-  const list = document.getElementById('historyList');
   document.getElementById('countBadge').textContent = h.length;
-  if (!h.length) { list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba LANÇAR para começar.</p></div>`; return; }
+  const list = document.getElementById('historyList');
+  if (!h.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba Contagem para começar.</p></div>`;
+    return;
+  }
   list.innerHTML = h.map(r => `
     <div class="history-item">
-      <div class="history-item-top">
+      <div class="hi-top">
         <div>
-          <div class="history-item-name">${r.item}</div>
-          <div class="history-item-cat">${r.categoria||''}</div>
-          <div class="history-item-time">${formatDate(r.ts)}</div>
+          <div class="hi-cat">${r.categoria}</div>
+          <div class="hi-local ${r.local}">${r.local === 'salao' ? '🍽️ SALÃO' : '📦 ESTOQUE'}</div>
+          <div class="hi-time">${formatDate(r.ts)}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <div class="history-total">${r.total}</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted)">
+        <div class="hi-right">
+          <div class="hi-count">${r.itens.length} itens</div>
+          <div class="hi-status">
             <div class="status-dot ${r.synced?'ok':'error'}"></div>
             ${r.synced?'ENVIADO':'PENDENTE'}
           </div>
         </div>
       </div>
-      <div class="history-chips">
-        <div class="chip">Medida <strong>${r.medida||'—'}</strong></div>
-        <div class="chip">Salão <strong>${r.salao}</strong></div>
-        <div class="chip">Estoque <strong>${r.estoque}</strong></div>
+      <div class="hi-chips">
+        ${r.itens.slice(0,8).map(i=>`<div class="hi-chip">${i.item} <strong>${i.total}</strong></div>`).join('')}
+        ${r.itens.length>8?`<div class="hi-chip">+${r.itens.length-8} mais</div>`:''}
       </div>
-      ${!r.synced?`<button class="btn-retry" onclick="retrySend(${r.ts})">↻ Reenviar</button>`:''}
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-async function retrySend(ts) {
-  const r = getHistory().find(x=>x.ts===ts); if(!r) return;
-  try {
-    await enviarDados({item:r.item,medida:r.medida,salao:r.salao,estoque:r.estoque,total:r.total});
-    r.synced=true;updateLocalRecord(r);showToast('✓ Sincronizado!','success');renderHistory();
-  } catch { showToast('Falha ao reenviar','error'); }
+function clearHistory() {
+  if (confirm('Apagar todo o histórico local?')) { localStorage.removeItem(STORAGE_KEY); renderHistory(); }
 }
 
-function clearHistory() { if(confirm('Apagar todo o histórico local?')){localStorage.removeItem(STORAGE_KEY);renderHistory();} }
-function formatDate(ts) { return new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function formatDate(ts) {
+  return new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
 
 let toastTimer;
 function showToast(msg, type='success') {
   const t = document.getElementById('toast'); t.textContent=msg; t.className='toast '+type;
   clearTimeout(toastTimer);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
-  toastTimer = setTimeout(()=>t.classList.remove('show'),3000);
+  toastTimer = setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-buildCategoriaList();
-renderHistory();
+window.addEventListener('online', ()=>document.getElementById('offlineBar').classList.remove('show'));
+window.addEventListener('offline', ()=>document.getElementById('offlineBar').classList.add('show'));
+if (!navigator.onLine) document.getElementById('offlineBar').classList.add('show');
+
+buildCatGrid();
 </script>
 </body>
 </html>
