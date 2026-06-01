@@ -1211,7 +1211,8 @@ function fetchJSON(url) {
     const timer = setTimeout(() => { delete window[cbName]; reject(new Error('timeout')); }, 20000);
     window[cbName] = (data) => { clearTimeout(timer); delete window[cbName]; resolve(data); };
     const script = document.createElement('script');
-    script.src = url + '&callback=' + cbName;
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = url + sep + 'callback=' + cbName;
     script.onerror = () => { clearTimeout(timer); delete window[cbName]; reject(new Error('load error')); };
     document.body.appendChild(script);
   });
