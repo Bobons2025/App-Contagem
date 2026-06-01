@@ -383,16 +383,11 @@ updateOnlineStatus();
 
 function enviarDados(payload) {
   return new Promise((resolve, reject) => {
-    const params = new URLSearchParams();
-    params.append('dados', JSON.stringify(payload));
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', SCRIPT_URL, true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.timeout = 15000;
-    xhr.onload = () => resolve();
-    xhr.onerror = () => reject(new Error('network'));
-    xhr.ontimeout = () => reject(new Error('timeout'));
-    xhr.send(params.toString());
+    const url = SCRIPT_URL + '?dados=' + encodeURIComponent(JSON.stringify(payload));
+    const img = new Image();
+    const timer = setTimeout(() => reject(new Error('timeout')), 15000);
+    img.onload = img.onerror = () => { clearTimeout(timer); resolve(); };
+    img.src = url;
   });
 }
 
