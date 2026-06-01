@@ -1051,16 +1051,18 @@ function renderHistory() {
     list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento ainda.<br>Use a aba Contagem para começar.</p></div>`;
     return;
   }
-  list.innerHTML = h.map(r => `
+  list.innerHTML = h.map(r => {
+    const itens = r.itens || [];
+    return `
     <div class="history-item">
       <div class="hi-top">
         <div>
-          <div class="hi-cat">${r.categoria}</div>
-          <div class="hi-local ${r.local}">${r.local === 'salao' ? '🍽️ SALÃO' : '📦 ESTOQUE'}</div>
+          <div class="hi-cat">${r.categoria||''}</div>
+          <div class="hi-local ${r.local||''}">${r.local === 'salao' ? '🍽️ SALÃO' : '📦 ESTOQUE'}</div>
           <div class="hi-time">${formatDate(r.ts)}</div>
         </div>
         <div class="hi-right">
-          <div class="hi-count">${r.itens.length} itens</div>
+          <div class="hi-count">${itens.length} itens</div>
           <div class="hi-status">
             <div class="status-dot ${r.synced?'ok':'error'}"></div>
             ${r.synced?'ENVIADO':'PENDENTE'}
@@ -1068,10 +1070,11 @@ function renderHistory() {
         </div>
       </div>
       <div class="hi-chips">
-        ${r.itens.slice(0,8).map(i=>`<div class="hi-chip">${i.item} <strong>${i.total}</strong></div>`).join('')}
-        ${r.itens.length>8?`<div class="hi-chip">+${r.itens.length-8} mais</div>`:''}
+        ${itens.slice(0,8).map(i=>`<div class="hi-chip">${i.item} <strong>${i.total}</strong></div>`).join('')}
+        ${itens.length>8?`<div class="hi-chip">+${itens.length-8} mais</div>`:''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function clearHistory() {
