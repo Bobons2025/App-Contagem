@@ -995,7 +995,7 @@ async function enviarContagem() {
   const btn = document.getElementById('btnSend');
   btn.disabled = true; btn.classList.add('loading');
 
-  // Monta array com todos os itens de uma vez
+  // Monta payload somando salão + estoque
   const payload = itensPreencher.map(item => {
     const vals = catContagem[item] || {};
     const salao = vals.salao || 0;
@@ -1006,22 +1006,26 @@ async function enviarContagem() {
   });
 
   try {
-    await enviarDados(payload);
-    const registros = payload.map(p => ({ item: p.item, total: p.total, status: 'ok' }));
-    saveHistory({ categoria: currentCat, local: currentLocal, itens: registros, ts: Date.now(), synced: true });
+    const res = await enviarDados(payload);
+    const synced = res && res.status === 'success';
+    const registros = payload.map(p => ({ item: p.item, medida: p.medida, salao: p.salao, estoque: p.estoque, total: p.total, status: synced ? 'ok' : 'erro' }));
+    saveHistory({ categoria: currentCat, local: currentLocal, itens: registros, ts: Date.now(), synced });
 
-    showToast(`✓ ${payload.length} itens enviados!`, 'success');
-
-    // Limpa contagem do local atual
-    const c = getContagem();
-    if (c[currentCat]) {
-      Object.keys(c[currentCat]).forEach(item => { if (c[currentCat][item]) c[currentCat][item][currentLocal] = 0; });
-      saveContagem(c);
+    if (synced) {
+      showToast(`✓ ${payload.length} itens enviados!`, 'success');
+      // Limpa contagem do local atual
+      const c = getContagem();
+      if (c[currentCat]) {
+        Object.keys(c[currentCat]).forEach(item => { if (c[currentCat][item]) c[currentCat][item][currentLocal] = 0; });
+        saveContagem(c);
+      }
+      showView('categorias');
+      buildCatGrid();
+    } else {
+      showToast('Erro ao enviar — tente reenviar pelo histórico', 'error');
     }
-    showView('categorias');
-    buildCatGrid();
   } catch {
-    const registros = payload.map(p => ({ item: p.item, total: p.total, status: 'erro' }));
+    const registros = payload.map(p => ({ item: p.item, medida: p.medida, salao: p.salao, estoque: p.estoque, total: p.total, status: 'erro' }));
     saveHistory({ categoria: currentCat, local: currentLocal, itens: registros, ts: Date.now(), synced: false });
     showToast('Falha ao enviar — verifique a conexão', 'error');
   }
@@ -1030,13 +1034,8 @@ async function enviarContagem() {
 }
 
 function enviarDados(payload) {
-  return new Promise((resolve, reject) => {
-    const url = SCRIPT_URL + '?dados=' + encodeURIComponent(JSON.stringify(payload));
-    const img = new Image();
-    const timer = setTimeout(() => reject(new Error('timeout')), 30000);
-    img.onload = img.onerror = () => { clearTimeout(timer); resolve(); };
-    img.src = url;
-  });
+  const url = SCRIPT_URL + '?dados=' + encodeURIComponent(JSON.stringify(payload));
+  return fetchJSON(url);
 }
 
 function showView(name) {
