@@ -453,6 +453,125 @@
     .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
     .empty-state p { font-size: 14px; line-height: 1.7; }
 
+    /* ===================== RESULTADO ===================== */
+    .res-wrap { padding: 28px 32px; padding-bottom: 40px; }
+    .res-header { margin-bottom: 20px; }
+    .res-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+    .res-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .res-date-row { display: flex; gap: 10px; margin-bottom: 24px; align-items: center; }
+    .res-select {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 16px;
+      color: var(--text); font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; font-weight: 500; outline: none; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .res-select:focus { border-color: var(--accent); }
+    .res-select option { background: var(--surface2); }
+    .btn-refresh {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-mid);
+      font-size: 18px; width: 46px; height: 46px;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+    .res-loading {
+      display: flex; align-items: center; gap: 14px;
+      padding: 40px; color: var(--text-muted); font-size: 14px;
+      justify-content: center;
+    }
+    .res-spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+
+    .res-total-card {
+      background: linear-gradient(135deg, rgba(0,200,240,0.1) 0%, rgba(0,200,240,0.04) 100%);
+      border: 1px solid rgba(0,200,240,0.2); border-radius: var(--radius);
+      padding: 24px 28px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .res-total-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+    .res-total-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 36px; font-weight: 700; color: var(--accent);
+      letter-spacing: -0.02em; line-height: 1;
+    }
+    .res-total-date { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .res-cats { display: flex; flex-direction: column; gap: 14px; }
+    .res-cat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .res-cat-card:hover { border-color: var(--border2); }
+    .res-cat-header {
+      padding: 16px 20px; display: flex; align-items: center;
+      justify-content: space-between; cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .res-cat-header:hover { background: rgba(255,255,255,0.02); }
+    .res-cat-left { display: flex; align-items: center; gap: 12px; }
+    .res-cat-icon { font-size: 22px; }
+    .res-cat-name { font-size: 15px; font-weight: 700; }
+    .res-cat-count { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .res-cat-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px; font-weight: 700; color: var(--accent);
+    }
+    .res-cat-arrow { font-size: 14px; color: var(--text-muted); margin-left: 8px; transition: transform 0.2s; }
+    .res-cat-card.open .res-cat-arrow { transform: rotate(180deg); }
+
+    .res-cat-items { display: none; }
+    .res-cat-card.open .res-cat-items { display: block; }
+
+    .res-item-row {
+      display: flex; align-items: center; padding: 11px 20px;
+      border-bottom: 1px solid rgba(31,48,68,0.5);
+      transition: background 0.15s;
+    }
+    .res-item-row:last-child { border-bottom: none; }
+    .res-item-row:hover { background: rgba(255,255,255,0.02); }
+    .res-item-name { flex: 1; font-size: 13px; font-weight: 500; }
+    .res-item-medida { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); width: 90px; text-align: center; }
+    .res-item-qty {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; font-weight: 600; width: 60px; text-align: right; color: var(--text);
+    }
+    .res-item-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; width: 110px; text-align: right;
+      color: var(--text-muted);
+    }
+    .res-item-val.has-val { color: var(--estoque); font-weight: 600; }
+
+    .res-items-header {
+      display: flex; padding: 8px 20px;
+      background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+    .res-items-header span {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+
+    @media (min-width: 1024px) {
+      .res-wrap { padding: 32px 40px; }
+      .res-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .res-total-card { padding: 28px 32px; }
+    }
+    @media (max-width: 479px) {
+      .res-wrap { padding: 20px 16px; }
+      .res-item-medida { display: none; }
+      .res-item-val { width: 90px; font-size: 12px; }
+    }
+
     /* TOAST */
     .toast {
       position: fixed; bottom: 90px; left: 50%;
@@ -532,6 +651,7 @@
     <div class="header-spacer"></div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('contagem')">CONTAGEM</button>
+      <button class="tab-btn" onclick="switchTab('resultado')">RESULTADO</button>
       <button class="tab-btn" onclick="switchTab('historico')">HISTÓRICO</button>
     </div>
   </header>
@@ -615,6 +735,36 @@
               </svg>
             </span>
           </button>
+        </div>
+      </div>
+
+      <!-- VIEW: RESULTADO -->
+      <div class="view" id="view-resultado">
+        <div class="res-wrap">
+          <div class="res-header">
+            <div>
+              <h2 class="res-title">Resultado do Estoque</h2>
+              <p class="res-sub">Selecione a data da contagem</p>
+            </div>
+          </div>
+          <div class="res-date-row">
+            <select id="selectData" class="res-select" onchange="carregarResultado()">
+              <option value="">-- Selecione a data --</option>
+            </select>
+            <button class="btn-refresh" onclick="carregarDatas()" title="Atualizar datas">↻</button>
+          </div>
+          <div id="resLoading" class="res-loading" style="display:none">
+            <div class="res-spinner"></div>
+            <span>Carregando dados da planilha...</span>
+          </div>
+          <div id="resContent" style="display:none">
+            <div class="res-total-card" id="resTotalCard"></div>
+            <div class="res-cats" id="resCats"></div>
+          </div>
+          <div id="resEmpty" class="empty-state" style="display:none">
+            <div class="icon">📊</div>
+            <p>Selecione uma data para<br>ver o resultado do estoque</p>
+          </div>
         </div>
       </div>
 
@@ -882,9 +1032,11 @@ function goBack(to) {
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', (i===0&&tab==='contagem')||(i===1&&tab==='historico'));
+    b.classList.toggle('active',
+      (i===0&&tab==='contagem')||(i===1&&tab==='resultado')||(i===2&&tab==='historico'));
   });
   if (tab === 'contagem') { showView('categorias'); buildCatGrid(); }
+  else if (tab === 'resultado') { showView('resultado'); carregarDatas(); }
   else { showView('historico'); renderHistory(); }
 }
 
