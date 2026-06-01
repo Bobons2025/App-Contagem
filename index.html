@@ -789,7 +789,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhTb4slTiqw6w2lSdw9nIsrT7YbX36z3E1EYNb1FfPjlo3s4yKNWTrXft5nihGctIm4w/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvQWH0fyWIJns2UbTxUukJKbB2_IzdgJB84nRiBWocY-kio2-tmBpl2-hgGC7LgKhv/exec";
 const STORAGE_KEY = "estoque_history";
 const CONTAGEM_KEY = "estoque_contagem";
 
@@ -909,10 +909,11 @@ function buildItemsList() {
           ${outroVal > 0 ? `<div class="item-prev has-val">+ ${outroVal} do ${outroLocal}</div>` : ''}
         </div>
         <div class="item-right">
-          <input class="item-input ${modeClass}" type="tel" inputmode="numeric" pattern="[0-9]*"
+          <input class="item-input ${modeClass}" type="text" inputmode="decimal"
             placeholder="0" value="${valorAtual}"
             data-item="${item}"
             oninput="onItemInput(this)"
+            onkeydown="onItemKeydown(event, this)"
             onfocus="this.select()" />
           ${outroVal > 0 ? `<div class="item-total">= ${total > 0 ? total : '—'}</div>` : ''}
         </div>
@@ -922,9 +923,27 @@ function buildItemsList() {
   updateFloatCount();
 }
 
+function onItemKeydown(event, input) {
+  // Enter ou Tab — vai para o próximo input
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    event.preventDefault();
+    const inputs = Array.from(document.querySelectorAll('.item-input'));
+    const idx = inputs.indexOf(input);
+    if (idx >= 0 && idx < inputs.length - 1) {
+      const next = inputs[idx + 1];
+      next.focus();
+      next.select();
+      // Scroll suave para o próximo item
+      next.closest('.item-row').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
 function onItemInput(input) {
+  // Converte vírgula para ponto
+  let raw = input.value.replace(',', '.');
   const item = input.dataset.item;
-  const val = parseFloat(input.value) || 0;
+  const val = parseFloat(raw) || 0;
   const contagem = getContagem();
   if (!contagem[currentCat]) contagem[currentCat] = {};
   if (!contagem[currentCat][item]) contagem[currentCat][item] = {};
