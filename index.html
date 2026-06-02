@@ -376,7 +376,15 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
       </div>
     </div>
     <button class="btn-login" onclick="doLogin()">Entrar</button>
-    <div class="login-forgot"><a onclick="showToast('Entre em contato com o administrador do sistema','error')">Esqueci minha senha</a></div>
+    <div class="login-forgot"><a onclick="mostrarRecuperacao()">Esqueci minha senha</a></div>
+  </div>
+  <!-- Recuperação de senha -->
+  <div id="resetScreen" style="display:none;width:100%;max-width:400px;margin:20px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px 36px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent2),transparent)"></div>
+    <div style="font-size:22px;margin-bottom:8px">🔑</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">Recuperar senha</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Entre em contato com o <strong style="color:var(--accent)">Administrador do sistema</strong> para redefinir sua senha.<br><br>O administrador pode acessar <strong>Usuários → 🔑</strong> para gerar uma senha temporária para você.</div>
+    <button onclick="document.getElementById('resetScreen').style.display='none';document.querySelector('.login-card').style.display='block'" style="width:100%;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">← Voltar ao login</button>
   </div>
 </div>
 
@@ -576,7 +584,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzvQWH0fyWIJns2UbTxUukJKbB2_IzdgJB84nRiBWocY-kio2-tmBpl2-hgGC7LgKhv/exec";
-const STORAGE_KEY="estoque_history",CONTAGEM_KEY="estoque_contagem",USERS_KEY="estoque_users",SESSION_KEY="estoque_session",AUDIT_KEY="estoque_audit";
+const STORAGE_KEY="estoque_history",CONTAGEM_KEY="estoque_contagem",USERS_KEY="estoque_users",SESSION_KEY="estoque_session",AUDIT_KEY="estoque_audit",WEEK_STATUS_KEY="estoque_week_status",RESET_TOKENS_KEY="estoque_reset_tokens";
 
 const DADOS={
   "BEBIDAS":{"COCA COLA LATA":"UNIDADE","COCA COLA ZERO LATA":"UNIDADE","GUARANA":"UNIDADE","GUARANÁ ZERO":"UNIDADE","AGUA SEM GÁS":"UNIDADE","AGUA COM GÁS":"UNIDADE","STELLA 330ML":"UNIDADE","SPATEN":"UNIDADE","MATE NATURAL/ LIMÃO":"UNIDADE","ICE TEA":"UNIDADE","H2O":"UNIDADE","H2O LIMONETO":"UNIDADE","AGUA TONICA":"UNIDADE","STELLA PURE GOLD":"UNIDADE","DEL VALLE UVA":"UNIDADE"},
@@ -596,11 +604,24 @@ const PERMISSIONS={
 };
 
 // ===== AUTH =====
+// Hash djb2 — DETERMINÍSTICO. Mesma entrada = mesmo resultado SEMPRE.
+// NUNCA chamar hashPw dentro de doLogin (causaria double-hash)
+// NUNCA chamar hashPw dentro de doLogout
 function hashPw(str){
-  // Hash simples mas consistente
   let h=5381;
   for(let i=0;i<str.length;i++) h=((h<<5)+h)+str.charCodeAt(i);
-  return (h>>>0).toString(16);
+  return 'pw_'+(h>>>0).toString(16);
+}
+
+// Compara senha pura com hash armazenado — sem re-hashear
+function checkPw(plain, stored){
+  // Suporte legado (sem prefixo pw_)
+  const computed = hashPw(plain);
+  if(stored === computed) return true;
+  // Legacy sem prefixo
+  const legacyHash = (function(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);return(h>>>0).toString(16);})(plain);
+  if(stored === legacyHash) return true;
+  return false;
 }
 
 function getUsers(){
@@ -608,12 +629,14 @@ function getUsers(){
     const u=JSON.parse(localStorage.getItem(USERS_KEY));
     if(u&&u.length) return u;
   }catch{}
+  // Admin padrão — senha hasheada UMA ÚNICA VEZ aqui
   const defaults=[{id:'1',nome:'Administrador',email:'admin@estoque.com',senha:hashPw('admin123'),perfil:'ADMIN',status:'ATIVO',criado:new Date().toISOString(),ultimoAcesso:null}];
   localStorage.setItem(USERS_KEY,JSON.stringify(defaults));
   return defaults;
 }
 function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u));}
 function getSession(){try{return JSON.parse(sessionStorage.getItem(SESSION_KEY));}catch{return null;}}
+// Sessão armazena APENAS dados de identificação — NUNCA a senha
 function setSession(u){sessionStorage.setItem(SESSION_KEY,JSON.stringify({id:u.id,nome:u.nome,email:u.email,perfil:u.perfil}));}
 
 function togglePw(id,btn){
@@ -628,28 +651,77 @@ function doLogin(){
   const errEl=document.getElementById('loginError');
   errEl.style.display='none';
   if(!email||!senha){errEl.textContent='Preencha e-mail e senha';errEl.style.display='block';return;}
+
   const users=getUsers();
-  const user=users.find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.status==='ATIVO');
-  if(!user||user.senha!==hashPw(senha)){
-    errEl.textContent='E-mail ou senha incorretos';errEl.style.display='block';
-    logAudit('auth','⛔','Login falhou','Tentativa com: '+email,'Sistema');
+  // Busca por email (case-insensitive)
+  const user=users.find(u=>u.email.toLowerCase()===email.toLowerCase());
+
+  if(!user){
+    errEl.textContent='E-mail não encontrado';errEl.style.display='block';
+    logAudit('auth','⛔','LOGIN_FAILED_USER_NOT_FOUND','Email: '+email,'Sistema');
     return;
   }
-  user.ultimoAcesso=new Date().toISOString();
+  if(user.status!=='ATIVO'){
+    errEl.textContent='Conta desativada. Contate o administrador.';errEl.style.display='block';
+    logAudit('auth','⛔','LOGIN_FAILED_ACCOUNT_DISABLED','Email: '+email,'Sistema');
+    return;
+  }
+  // checkPw compara senha pura com hash — NÃO re-hasheia
+  if(!checkPw(senha, user.senha)){
+    errEl.textContent='Senha incorreta';errEl.style.display='block';
+    logAudit('auth','⛔','LOGIN_FAILED_PASSWORD','Email: '+email,'Sistema');
+    return;
+  }
+
+  // Atualiza APENAS ultimoAcesso — NÃO toca na senha
+  const idx=users.findIndex(u=>u.id===user.id);
+  users[idx].ultimoAcesso=new Date().toISOString();
   saveUsers(users);
-  setSession(user);
-  logAudit('auth','✅','Login realizado','Usuário: '+user.nome,user.nome);
-  initApp(user);
+
+  // Cria sessão sem a senha
+  setSession(users[idx]);
+  logAudit('auth','✅','LOGIN_SUCCESS','Usuário: '+user.nome+' | Perfil: '+user.perfil,user.nome);
+  initApp(users[idx]);
 }
 
+// Logout: apaga APENAS a sessão — não toca nos usuários
 function doLogout(){
   const s=getSession();
-  if(s) logAudit('auth','🚪','Logout realizado','Usuário: '+s.nome,s.nome);
+  if(s) logAudit('auth','🚪','LOGOUT','Usuário: '+s.nome,s.nome);
   sessionStorage.removeItem(SESSION_KEY);
+  // Reset campos login
+  const em=document.getElementById('loginEmail');
+  const pw=document.getElementById('loginPassword');
+  if(em) em.value='';
+  if(pw) pw.value='';
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginEmail').value='';
-  document.getElementById('loginPassword').value='';
+  // Esconde tela de recuperação se estiver aberta
+  const rr=document.getElementById('resetScreen');
+  if(rr) rr.style.display='none';
+}
+
+// ===== RESET DE SENHA (Admin redefine para usuário) =====
+function getResetTokens(){try{return JSON.parse(localStorage.getItem(RESET_TOKENS_KEY))||[];}catch{return[];}}
+function saveResetTokens(t){localStorage.setItem(RESET_TOKENS_KEY,JSON.stringify(t));}
+
+function gerarTokenReset(userId){
+  const tokens=getResetTokens().filter(t=>!t.usado&&t.expira>Date.now());
+  const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  tokens.push({id:token,userId,expira:Date.now()+30*60*1000,usado:false,criado:new Date().toISOString()});
+  saveResetTokens(tokens);
+  return token;
+}
+
+function adminResetarSenha(idx){
+  const users=getUsers(),s=getSession();
+  const user=users[idx];
+  if(!user) return;
+  const novaSenha=Math.random().toString(36).slice(2,10).toUpperCase();
+  users[idx].senha=hashPw(novaSenha); // hasheia UMA vez
+  saveUsers(users);
+  logAudit('usuario','🔑','SENHA_REDEFINIDA_ADMIN',`Usuário: ${user.nome} | Nova senha temporária gerada`,s?.nome);
+  alert(`✅ Nova senha temporária para ${user.nome}:\n\n${novaSenha}\n\nAnote e envie ao usuário. Ele deve trocar após o login.`);
 }
 
 function checkPermission(view){
@@ -683,6 +755,23 @@ function initApp(user){
 }
 
 window.addEventListener('load',()=>{
+  // Migração: converte hashes antigos (sem prefixo) para novo formato
+  // Isso garante que o admin padrão funcione mesmo após atualização do hash
+  try{
+    const users=JSON.parse(localStorage.getItem(USERS_KEY));
+    if(users&&users.length){
+      let migrated=false;
+      users.forEach(u=>{
+        // Se senha não tem prefixo pw_, é hash antigo — força recriação do admin padrão
+        if(u.id==='1'&&u.email==='admin@estoque.com'&&!u.senha.startsWith('pw_')){
+          u.senha=hashPw('admin123');
+          migrated=true;
+        }
+      });
+      if(migrated) localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    }
+  }catch{}
+
   const s=getSession();
   if(s){
     const users=getUsers();
@@ -722,8 +811,43 @@ function showView(name){
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('show');}
 
-// ===== DASHBOARD =====
+// ===== STATUS DA SEMANA (PERSISTENTE) =====
+function getWeekStatusKey(){return 'week_'+getSegundaFeira().replace(/\//g,'_');}
+
+function getWeekStatus(){
+  try{return JSON.parse(localStorage.getItem(WEEK_STATUS_KEY))||{};}catch{return{};}
+}
+function saveWeekStatus(data){localStorage.setItem(WEEK_STATUS_KEY,JSON.stringify(data));}
+
+function getStatusSemanaAtual(){
+  const ws=getWeekStatus();
+  const key=getWeekStatusKey();
+  return ws[key]||{cats:{}};
+}
+
+function marcarCatConcluida(cat,local){
+  const ws=getWeekStatus();
+  const key=getWeekStatusKey();
+  if(!ws[key]) ws[key]={cats:{}};
+  if(!ws[key].cats[cat]) ws[key].cats[cat]={salao:false,estoque:false};
+  ws[key].cats[cat][local]=true;
+  // Se ambos marcados, cat é concluída
+  const ambos=ws[key].cats[cat].salao&&ws[key].cats[cat].estoque;
+  ws[key].cats[cat].concluida=ambos;
+  // Verifica se todas as cats foram concluídas
+  const todasConcluidas=CATEGORIAS.every(c=>ws[key].cats[c]?.concluida);
+  ws[key].status=todasConcluidas?'CONCLUIDA':'EM_ANDAMENTO';
+  ws[key].ultimaAtualizacao=new Date().toISOString();
+  saveWeekStatus(ws);
+  return ws[key];
+}
+
 function getCatStatus(cat){
+  // Primeiro verifica status persistente da semana
+  const ws=getStatusSemanaAtual();
+  if(ws.cats?.[cat]?.concluida) return 'completo';
+  if(ws.cats?.[cat]?.salao||ws.cats?.[cat]?.estoque) return 'parcial';
+  // Fallback: verifica contagem local
   const c=getContagem()[cat];
   if(!c) return 'vazio';
   let s=0,e=0;
@@ -735,29 +859,37 @@ function getCatStatus(cat){
 
 function updateDash(){
   const contagem=getContagem();
-  let pend=0,conc=0,totalCats=0,doneCats=0;
+  const wsAtual=getStatusSemanaAtual();
+  let pend=0,conc=0,totalCats=CATEGORIAS.length,doneCats=0;
+
   CATEGORIAS.forEach(cat=>{
     const status=getCatStatus(cat);
     const n=Object.keys(DADOS[cat]).length;
     const catC=contagem[cat]||{};
     let done=0;
     Object.keys(DADOS[cat]).forEach(item=>{if((catC[item]?.salao||0)>0||(catC[item]?.estoque||0)>0)done++;});
-    pend+=n-done; conc+=done; totalCats++;
+    pend+=n-done; conc+=done;
     if(status==='completo') doneCats++;
   });
+
   document.getElementById('dPend').textContent=pend;
   document.getElementById('dConc').textContent=conc;
   const now=new Date();
   const s=getSession();
   document.getElementById('dGreeting').textContent=`Olá, ${s?.nome?.split(' ')[0]||''}! 👋`;
   document.getElementById('dDate').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  // Week status
-  const allDone=doneCats===totalCats;
+
+  // Status da semana — usa status persistente se disponível
+  const statusPersistente=wsAtual.status;
+  const allDone=statusPersistente==='CONCLUIDA'||(doneCats===totalCats&&totalCats>0);
   const ws=document.getElementById('weekStatus');
   ws.className='week-status '+(allDone?'done':'pending');
-  document.getElementById('weekStatus').querySelector('.week-status-icon').textContent=allDone?'✅':'⚠️';
+  ws.querySelector('.week-status-icon').textContent=allDone?'✅':'⚠️';
   document.getElementById('weekStatusTitle').textContent=allDone?'✅ Contagem da Semana Concluída':'⚠️ Contagem da Semana Pendente';
-  document.getElementById('weekStatusSub').textContent=allDone?`Todas as ${totalCats} categorias foram contadas`:`${doneCats} de ${totalCats} categorias concluídas`;
+  document.getElementById('weekStatusSub').textContent=allDone
+    ?`Todas as ${totalCats} categorias contadas — semana de ${getSegundaFeira()}`
+    :`${doneCats} de ${totalCats} categorias concluídas — semana de ${getSegundaFeira()}`;
+
   // Cat cards
   document.getElementById('dashCats').innerHTML=CATEGORIAS.map(cat=>{
     const status=getCatStatus(cat);
@@ -900,7 +1032,9 @@ async function enviarContagem(){
     saveHistory({categoria:currentCat,local:currentLocal,itens:payload.map(p=>({...p,status:ok?'ok':'erro'})),ts:Date.now(),synced:ok,usuario:session?.nome,dataContagem:dataC});
     if(ok){
       showToast(`✓ ${payload.length} itens enviados!`,'success');
-      logAudit('contagem','✅','Contagem finalizada',`Categoria: ${currentCat} | Local: ${currentLocal} | ${payload.length} itens`,session?.nome);
+      // Marca categoria como concluída no status persistente da semana
+      marcarCatConcluida(currentCat, currentLocal);
+      logAudit('contagem','✅','CONTAGEM_FINALIZADA',`Categoria: ${currentCat} | Local: ${currentLocal} | ${payload.length} itens`,session?.nome);
       const cc=getContagem();
       if(cc[currentCat]) payload.forEach(p=>{if(!cc[currentCat][p.item])cc[currentCat][p.item]={};cc[currentCat][p.item][currentLocal+'_enviado']=true;});
       saveContagem(cc);
@@ -1057,7 +1191,11 @@ function renderUsers(){
       <div class="user-cell"><div class="user-av">${u.nome.charAt(0).toUpperCase()}</div><div><div class="user-n">${u.nome}</div><div class="user-e">${u.email}</div></div></div>
       <div><span class="role-badge ${u.perfil==='ADMIN'?'role-admin':'role-user'}">${u.perfil}</span></div>
       <div><span class="st-badge ${u.status==='ATIVO'?'st-active':'st-inactive'}">${u.status}</span></div>
-      <div class="row-actions"><button class="btn-act" onclick="editUser(${i})">Editar</button><button class="btn-act del" onclick="delUser(${i})">Excluir</button></div>
+      <div class="row-actions">
+        <button class="btn-act" onclick="editUser(${i})">Editar</button>
+        <button class="btn-act" onclick="adminResetarSenha(${i})" title="Gerar senha temporária">🔑</button>
+        <button class="btn-act del" onclick="delUser(${i})">Excluir</button>
+      </div>
     </div>`).join('');
 }
 
@@ -1096,37 +1234,43 @@ function saveUser(){
 
   if(!nome||!email){showToast('Preencha nome e e-mail','error');return;}
   if(isNew&&(!senha||senha.length<6)){showToast('Senha deve ter mínimo 6 caracteres','error');return;}
+  if(!isNew&&senha&&senha.length>0&&senha.length<6){showToast('Nova senha deve ter mínimo 6 caracteres','error');return;}
 
   const users=getUsers();
   const session=getSession();
 
   if(isNew){
-    // Verifica email duplicado
     if(users.find(u=>u.email.toLowerCase()===email.toLowerCase())){showToast('E-mail já cadastrado','error');return;}
-    const newUser={id:Date.now().toString(),nome,email,senha:hashPw(senha),perfil,status,criado:new Date().toISOString(),ultimoAcesso:null};
+    // Hasheia a senha UMA ÚNICA VEZ no momento da criação
+    const newUser={
+      id:Date.now().toString(),nome,email,
+      senha:hashPw(senha),
+      perfil,status,
+      criado:new Date().toISOString(),ultimoAcesso:null
+    };
     users.push(newUser);
-    logAudit('usuario','👤','Usuário criado',`Nome: ${nome} | E-mail: ${email} | Perfil: ${perfil}`,session?.nome);
+    logAudit('usuario','👤','USUARIO_CRIADO',`Nome: ${nome} | Email: ${email} | Perfil: ${perfil}`,session?.nome);
   } else {
     const idx=parseInt(editIdx);
     const old=users[idx];
-    users[idx]={...old,nome,email,perfil,status};
-    if(senha&&senha.length>=6) users[idx].senha=hashPw(senha);
-    else if(senha&&senha.length>0&&senha.length<6){showToast('Senha deve ter mínimo 6 caracteres','error');return;}
-    logAudit('usuario','✏️','Usuário editado',`Nome: ${nome} | Perfil: ${perfil} | Status: ${status}`,session?.nome);
+    // Preserva senha antiga se campo vazio — NUNCA re-hasheia a senha existente
+    const novaSenha=senha&&senha.length>=6 ? hashPw(senha) : old.senha;
+    users[idx]={...old,nome,email,perfil,status,senha:novaSenha};
+    if(senha&&senha.length>=6) logAudit('usuario','🔑','SENHA_ALTERADA',`Usuário: ${nome}`,session?.nome);
+    logAudit('usuario','✏️','USUARIO_EDITADO',`Nome: ${nome} | Perfil: ${perfil} | Status: ${status}`,session?.nome);
   }
   saveUsers(users);
   closeUserModal();
   renderUsers();
-  // Atualiza contador admin
   if(getSession()?.perfil==='ADMIN') document.getElementById('dUsers').textContent=users.filter(u=>u.status==='ATIVO').length;
-  showToast(isNew?'Usuário criado com sucesso!':'Usuário atualizado!','success');
+  showToast(isNew?'✅ Usuário criado! Já pode fazer login.':'Usuário atualizado!','success');
 }
 
 function delUser(idx){
   const users=getUsers(),s=getSession();
   if(users[idx].email===s?.email){showToast('Não pode excluir o próprio usuário','error');return;}
   if(!confirm(`Excluir o usuário ${users[idx].nome}?`)) return;
-  logAudit('usuario','🗑️','Usuário excluído',`Nome: ${users[idx].nome} | E-mail: ${users[idx].email}`,s?.nome);
+  logAudit('usuario','🗑️','USUARIO_EXCLUIDO',`Nome: ${users[idx].nome} | Email: ${users[idx].email}`,s?.nome);
   users.splice(idx,1);
   saveUsers(users);
   renderUsers();
@@ -1191,6 +1335,11 @@ function showToast(msg,type='success'){
   clearTimeout(toastTimer);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
   toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function mostrarRecuperacao(){
+  document.querySelector('.login-card').style.display='none';
+  document.getElementById('resetScreen').style.display='block';
 }
 
 window.addEventListener('online',()=>document.getElementById('offlineBar').classList.remove('show'));
