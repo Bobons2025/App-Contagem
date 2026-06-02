@@ -906,7 +906,7 @@ function buildItemsList() {
         <div class="item-info">
           <div class="item-name">${item}</div>
           <div class="item-medida">${medida}</div>
-          ${outroVal > 0 ? `<div class="item-prev has-val">+ ${outroVal} do ${outroLocal}</div>` : ''}
+          ${outroVal > 0 ? `<div class="item-prev has-val">✓ ${outroLocal}: ${outroVal}</div>` : ''}
         </div>
         <div class="item-right">
           <input class="item-input ${modeClass}" type="text" inputmode="decimal"
@@ -915,7 +915,7 @@ function buildItemsList() {
             oninput="onItemInput(this)"
             onkeydown="onItemKeydown(event, this)"
             onfocus="this.select()" />
-          ${outroVal > 0 ? `<div class="item-total">= ${total > 0 ? total : '—'}</div>` : ''}
+          ${outroVal > 0 ? `<div class="item-total">Total: ${total > 0 ? total : '—'}</div>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -1013,12 +1013,14 @@ async function enviarContagem() {
 
     if (synced) {
       showToast(`✓ ${payload.length} itens enviados!`, 'success');
-      // Limpa contagem do local atual
+      // Marca como enviado mas mantém o valor para referência na 2ª contagem
       const c = getContagem();
-      if (c[currentCat]) {
-        Object.keys(c[currentCat]).forEach(item => { if (c[currentCat][item]) c[currentCat][item][currentLocal] = 0; });
-        saveContagem(c);
-      }
+      if (!c[currentCat]) c[currentCat] = {};
+      payload.forEach(p => {
+        if (!c[currentCat][p.item]) c[currentCat][p.item] = {};
+        c[currentCat][p.item][currentLocal + '_enviado'] = true;
+      });
+      saveContagem(c);
       showView('categorias');
       buildCatGrid();
     } else {
