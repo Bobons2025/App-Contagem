@@ -1117,13 +1117,17 @@ async function reenviarContagem(idx) {
   if (!payload.length) { showToast('Nenhum item para reenviar', 'error'); return; }
 
   try {
-    await enviarDados(payload);
-    h[idx].synced = true;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
-    showToast(`✓ ${payload.length} itens reenviados!`, 'success');
-    renderHistory();
-  } catch {
-    showToast('Falha ao reenviar', 'error');
+    const res = await enviarDados(payload);
+    if (res && res.status === 'success') {
+      h[idx].synced = true;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
+      showToast(`✓ ${payload.length} itens reenviados!`, 'success');
+      renderHistory();
+    } else {
+      showToast('Erro: ' + (res?.message || 'tente novamente'), 'error');
+    }
+  } catch(err) {
+    showToast('Falha ao reenviar: ' + err.message, 'error');
   }
 }
 
