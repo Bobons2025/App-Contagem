@@ -673,7 +673,7 @@
       <div class="view active" id="view-categorias">
         <div class="cats-header">
           <h2>Selecione a categoria</h2>
-          <p>Escolha uma categoria para iniciar a contagem</p>
+          <p class="res-sub">Contagem de <strong id="dataContagemLabel"></strong></p>
         </div>
         <div class="cat-grid" id="catGrid"></div>
       </div>
@@ -823,6 +823,9 @@ function getCatStatus(cat) {
 }
 
 function buildCatGrid() {
+  // Mostra data da contagem
+  const labelEl = document.getElementById('dataContagemLabel');
+  if (labelEl) labelEl.textContent = formatDataLabel(getSegundaFeira());
   const grid = document.getElementById('catGrid');
   const sidebar = document.getElementById('sidebarCats');
   grid.innerHTML = '';
@@ -984,6 +987,17 @@ function updateFloatCount() {
   document.getElementById('floatBar').style.width = pct + '%';
 }
 
+function getSegundaFeira() {
+  const hoje = new Date();
+  const diaSemana = hoje.getDay();
+  const diff = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const segunda = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + diff);
+  const d = String(segunda.getDate()).padStart(2,'0');
+  const m = String(segunda.getMonth()+1).padStart(2,'0');
+  const y = segunda.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
 async function enviarContagem() {
   const contagem = getContagem();
   const catContagem = contagem[currentCat] || {};
@@ -996,13 +1010,14 @@ async function enviarContagem() {
   btn.disabled = true; btn.classList.add('loading');
 
   // Monta payload somando salão + estoque
+  const dataContagem = getSegundaFeira();
   const payload = itensPreencher.map(item => {
     const vals = catContagem[item] || {};
     const salao = vals.salao || 0;
     const estoque = vals.estoque || 0;
     const total = salao + estoque;
     const medida = DADOS[currentCat][item];
-    return { item, medida, salao, estoque, total };
+    return { item, medida, salao, estoque, total, dataContagem };
   });
 
   try {
