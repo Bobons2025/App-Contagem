@@ -847,10 +847,11 @@ function initApp(){
   document.getElementById('app').style.display='flex';
   document.getElementById('app').classList.add('show');
   renderAppHeader();
-  document.querySelector('.admin-section')&&(document.getElementById('admin-sec').style.display=isAdmin()?'block':'none');
-  document.querySelectorAll('.admin-c').forEach(el=>el.style.display=isAdmin()?'block':'none');
+  var adminSec=document.getElementById('admin-sec');
+  if(adminSec) adminSec.style.display=isAdmin()?'block':'none';
+  document.querySelectorAll('.admin-c').forEach(function(el){el.style.display=isAdmin()?'block':'none';});
   document.getElementById('sb-week').textContent=getMonday();
-  const startView=can('dash')?'dash':'cont';
+  var startView=can('dash')?'dash':'cont';
   goTo(startView);
 }
 
@@ -904,10 +905,12 @@ async function loadDash(){
     document.getElementById('wb-sub').textContent=done?'Todas as categorias contadas — semana de '+r.semana:r.totalConcluidas+' de '+r.totalCats+' categorias — semana de '+r.semana;
     document.getElementById('d-pend').textContent=r.totalCats-r.totalConcluidas;
     document.getElementById('d-conc').textContent=r.totalConcluidas;
-    if(isAdmin()&&r.totalUsuarios!=null) document.getElementById('d-users').textContent=r.totalUsuarios;
+    if(isAdmin()&&r.totalUsuarios!==undefined) document.getElementById('d-users').textContent=r.totalUsuarios;
     // Sidebar status
     document.getElementById('sb-status').textContent=done?'✅ Concluída':'⚠️ Pendente';
     document.getElementById('sb-status').className='sb-status '+(done?'done':'pend');
+    // Garante cards admin visíveis
+    if(isAdmin()) document.querySelectorAll('.admin-c').forEach(function(el){el.style.display='block';});
     // Cat cards
     document.getElementById('dash-cats').innerHTML=CATS.map(cat=>{
       const st=r.catStatus?.[cat]||'PENDENTE';
@@ -1417,19 +1420,19 @@ window.addEventListener('load',async()=>{
     showScreen('sc-reset');return;
   }
   // Verifica sessão existente
-  const token=getToken();
-  if(token){
+  var savedToken=getToken();
+  if(savedToken){
     try{
-      const r=await api({acao:'validateSession',token});
-      if(r.status==='ok'){setSession(r.user,token);showScreen(null);initApp();return;}
-    }catch{}
+      var vr=await api({acao:'validateSession',token:savedToken});
+      if(vr.status==='ok'){
+        setSession(vr.user,savedToken);
+        showScreen(null);
+        initApp();
+        return;
+      }
+    }catch(e){}
     clearToken();
   }
-  // Verifica se sistema precisa de setup (sem usuários)
-  try{
-    const r=await api({acao:'ping'});
-    // Sistema online — mostra login normal
-  }catch{}
   showScreen('sc-login');
 });
 </script>
