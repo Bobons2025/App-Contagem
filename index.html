@@ -447,6 +447,24 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .integ-desc{font-size:11px;color:var(--tl);}
 .integ-badge{margin-left:auto;font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.06em;background:var(--s3);color:var(--tl);flex-shrink:0;}
 @media(min-width:1024px){.cmv-grid{grid-template-columns:repeat(4,1fr);}}
+/* ── STATUS BADGES PEDIDOS / CONTAS ── */
+.st-badge{font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.04em;display:inline-block;}
+.st-aberto{background:rgba(14,165,233,.15);color:var(--ac);}
+.st-enviado{background:rgba(167,139,250,.15);color:var(--vio);}
+.st-parcial{background:rgba(249,115,22,.15);color:var(--ora);}
+.st-recebido,.st-pago{background:rgba(52,211,153,.15);color:var(--ok);}
+.st-vencido,.st-cancelado{background:rgba(244,63,94,.1);color:var(--er);}
+/* ── PAINEL FINANCEIRO ── */
+.fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.fin-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 20px;}
+.fin-card-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tl);margin-bottom:6px;}
+.fin-card-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;}
+/* ── NF STEP ── */
+.nf-step{display:none;} .nf-step.on{display:block;}
+.step-nav{display:flex;gap:6px;margin-bottom:16px;}
+.step-dot{width:28px;height:28px;border-radius:50%;background:var(--s3);color:var(--tl);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-dot.on{background:var(--ac);color:#fff;}
+.step-dot.done{background:var(--ok);color:#fff;}
 .nf-header-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 @media(max-width:767px){.param-grid{grid-template-columns:1fr;}.nf-header-grid{grid-template-columns:1fr 1fr;}
   .cmv-grid{grid-template-columns:1fr 1fr;}}
@@ -568,11 +586,14 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
       </div>
       <div class="sb-sec" id="compras-sec" style="display:none">
         <div class="sb-lbl">Compras</div>
+        <div class="nav-item" id="nav-pedidos" onclick="goTo('pedidos')"><span class="nav-icon">📋</span>Pedidos</div>
         <div class="nav-item" id="nav-nf" onclick="goTo('nf')"><span class="nav-icon">📥</span>Entrada NF</div>
-        <div class="nav-item" id="nav-hcomp" onclick="goTo('hcomp')"><span class="nav-icon">📋</span>Histórico</div>
+        <div class="nav-item" id="nav-hcomp" onclick="goTo('hcomp')"><span class="nav-icon">🗂️</span>Histórico</div>
       </div>
       <div class="sb-sec" id="fin-sec" style="display:none">
         <div class="sb-lbl">Financeiro</div>
+        <div class="nav-item" id="nav-fin" onclick="goTo('fin')"><span class="nav-icon">📈</span>Painel</div>
+        <div class="nav-item" id="nav-cpagar" onclick="goTo('cpagar')"><span class="nav-icon">💳</span>Contas a Pagar</div>
         <div class="nav-item" id="nav-cmv" onclick="goTo('cmv')"><span class="nav-icon">💰</span>CMV</div>
         <div class="nav-item" id="nav-integ" onclick="goTo('integ')"><span class="nav-icon">🔗</span>Integrações</div>
       </div>
@@ -819,7 +840,8 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
           <div id="lista-compras-section" style="display:none">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
               <div style="font-size:14px;font-weight:700" id="lista-titulo">📋 Lista de Compras</div>
-              <div style="display:flex;gap:8px">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button onclick="openPedidoModal()" style="background:var(--ac);color:#fff;border:none;border-radius:var(--rs);font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;cursor:pointer;">📋 Gerar Pedido</button>
                 <button onclick="exportListaCompras('csv')" class="btn-exp">📄 CSV</button>
                 <button onclick="exportListaCompras('xlsx')" class="btn-exp">📊 Excel</button>
                 <button onclick="exportListaCompras('pdf')" class="btn-exp">📑 PDF</button>
@@ -933,6 +955,67 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
         </div>
       </div>
 
+      <!-- PEDIDOS DE COMPRA -->
+      <div class="view" id="view-pedidos">
+        <div class="page-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <div><div style="font-size:18px;font-weight:800">📋 Pedidos de Compra</div><div style="font-size:11px;color:var(--tl);margin-top:2px">Gerados pelo Simulador ou manualmente</div></div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <select id="ped-filter-status" class="filter-inp" onchange="loadPedidos()" style="max-width:150px"><option value="">Todos status</option><option>ABERTO</option><option>ENVIADO</option><option>PARCIALMENTE RECEBIDO</option><option>RECEBIDO</option><option>CANCELADO</option></select>
+            </div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:auto">
+            <table class="mod-tbl"><thead><tr><th>Número</th><th>Data</th><th>Fornecedor</th><th>Itens</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="pedidos-body"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--tl)">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTAS A PAGAR -->
+      <div class="view" id="view-cpagar">
+        <div class="page-wrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <span style="font-size:18px;font-weight:800">💳 Contas a Pagar</span>
+            <button onclick="openContaModal()" style="background:var(--ac);color:#fff;border:none;border-radius:var(--rs);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer;">+ Nova Conta</button>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+            <div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);border-radius:var(--rs);padding:10px 16px">
+              <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--er);margin-bottom:3px">Vencidas</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--er)" id="cp-vencido">R$ —</div>
+            </div>
+            <div style="background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);border-radius:var(--rs);padding:10px 16px">
+              <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ac);margin-bottom:3px">Em Aberto</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ac)" id="cp-aberto">R$ —</div>
+            </div>
+          </div>
+          <div class="filter-row">
+            <select id="cp-status" class="filter-inp" onchange="loadContasPagar()" style="max-width:140px"><option value="">Todos</option><option>ABERTO</option><option>VENCIDO</option><option>PAGO</option><option>PARCIAL</option><option>CANCELADO</option></select>
+            <input id="cp-forn" class="filter-inp" placeholder="Fornecedor..." oninput="loadContasPagar()"/>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:auto">
+            <table class="mod-tbl"><thead><tr><th>Fornecedor</th><th>Documento</th><th>Valor</th><th>Emissão</th><th>Vencimento</th><th>Forma Pgto</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="cpagar-body"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tl)">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL FINANCEIRO -->
+      <div class="view" id="view-fin">
+        <div class="page-wrap">
+          <div style="font-size:18px;font-weight:800;margin-bottom:4px">📈 Painel Financeiro</div>
+          <div style="font-size:11px;color:var(--tl);margin-bottom:18px" id="fin-mes-label">Mês atual</div>
+          <div class="fin-grid" id="fin-cards"></div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px">📋 Contas Vencidas</div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:auto">
+            <table class="mod-tbl"><thead><tr><th>Fornecedor</th><th>Documento</th><th>Valor</th><th>Vencimento</th><th>Ação</th></tr></thead>
+              <tbody id="fin-venc-body"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--tl)">—</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- INTEGRAÇÕES -->
       <div class="view" id="view-integ">
         <div class="page-wrap">
@@ -952,6 +1035,66 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
     </div><!-- /main -->
   </div><!-- /app-body -->
 </div><!-- /app -->
+
+<!-- MODAL PEDIDO DE COMPRA -->
+<div class="modal-ov" id="pedido-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title">📋 Pedido de Compra</div>
+    <div class="modal-sub" id="ped-modal-sub">Preencha os dados do pedido</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="field"><label>Número</label><input type="text" id="ped-num" class="filter-inp" style="width:100%" placeholder="Auto"/></div>
+      <div class="field"><label>Data</label><input type="date" id="ped-data" class="filter-inp" style="width:100%"/></div>
+    </div>
+    <div class="field"><label>Fornecedor</label><input type="text" id="ped-forn" placeholder="Nome do fornecedor" class="filter-inp" style="width:100%"/></div>
+    <div class="field"><label>Observações</label><input type="text" id="ped-obs" placeholder="Prazo de entrega, condições..." class="filter-inp" style="width:100%"/></div>
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tl)" id="ped-resumo"></div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closePedidoModal()">Cancelar</button>
+      <button class="btn-ok" onclick="exportPedidoPDF()" style="background:var(--s2);border:1px solid var(--b1);color:var(--tx)">📑 PDF</button>
+      <button class="btn-ok" onclick="salvarPedido()">✅ Gerar Pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTA A PAGAR -->
+<div class="modal-ov" id="conta-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">💳 Conta a Pagar</div>
+    <input type="hidden" id="conta-id"/>
+    <div class="field"><label>Fornecedor</label><input type="text" id="conta-forn" class="filter-inp" style="width:100%"/></div>
+    <div class="field"><label>Documento / NF</label><input type="text" id="conta-doc" class="filter-inp" style="width:100%"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Valor (R$)</label><input type="number" step="0.01" id="conta-valor" class="filter-inp" style="width:100%"/></div>
+      <div class="field"><label>Forma Pagamento</label>
+        <select id="conta-forma" class="filter-inp" style="width:100%"><option>Boleto</option><option>PIX</option><option>Transferência</option><option>Dinheiro</option><option>Cartão de Crédito</option><option>Cartão de Débito</option></select>
+      </div>
+      <div class="field"><label>Data Emissão</label><input type="date" id="conta-emissao" class="filter-inp" style="width:100%"/></div>
+      <div class="field"><label>Vencimento</label><input type="date" id="conta-venc" class="filter-inp" style="width:100%"/></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="closeContaModal()">Cancelar</button>
+      <button class="btn-ok" onclick="saveConta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO -->
+<div class="modal-ov" id="pag-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">✅ Registrar Pagamento</div>
+    <input type="hidden" id="pag-conta-id"/>
+    <div class="field"><label>Data do Pagamento</label><input type="date" id="pag-data" class="filter-inp" style="width:100%"/></div>
+    <div class="field"><label>Valor Pago (R$)</label><input type="number" step="0.01" id="pag-valor" class="filter-inp" style="width:100%"/></div>
+    <div class="field"><label>Observação</label><input type="text" id="pag-obs" placeholder="Comprovante, banco..." class="filter-inp" style="width:100%"/></div>
+    <div class="field">
+      <label><input type="checkbox" id="pag-parcial" style="margin-right:5px"/>Pagamento parcial</label>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="document.getElementById('pag-modal').classList.remove('show')">Cancelar</button>
+      <button class="btn-ok" onclick="confirmarPagamento()">Confirmar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL PARÂMETROS DE ESTOQUE -->
 <div class="modal-ov" id="param-modal">
@@ -1029,8 +1172,8 @@ const DADOS = {
 const CAT_ICONS = {'BEBIDAS':'🥤','COZINHA':'🍳','DESCARTAVEL':'🧻','HORTIFRUTI':'🥦','LIMPEZA':'🧹','PEIXES':'🐟'};
 const CATS = Object.keys(DADOS);
 const PERMS = {
-  SUPER_ADMIN:['dash','cont','res','hist','cor','usr','aud','plan','sim','nf','hcomp','cmv','integ'],
-  ADMIN:      ['dash','cont','res','hist','cor','usr','aud','plan','sim','nf','hcomp','cmv'],
+  SUPER_ADMIN:['dash','cont','res','hist','cor','usr','aud','plan','sim','nf','hcomp','cmv','integ','pedidos','cpagar','fin'],
+  ADMIN:      ['dash','cont','res','hist','cor','usr','aud','plan','sim','nf','hcomp','cmv','pedidos','cpagar','fin'],
   USER:       ['dash','cont','hist']
 };
 
@@ -1230,8 +1373,11 @@ function goTo(v){
   if(v==='sim')  loadSim();
   if(v==='nf')   initNF();
   if(v==='hcomp') loadHistCompras();
-  if(v==='cmv')  initCMV();
-  if(v==='integ'){}
+  if(v==='cmv')    initCMV();
+  if(v==='integ')  {}
+  if(v==='pedidos') loadPedidos();
+  if(v==='cpagar')  loadContasPagar();
+  if(v==='fin')     loadFinanceiro();
   if(window.innerWidth<1024) closeSb();
   document.getElementById('main').scrollTop=0;
 }
@@ -2197,6 +2343,321 @@ async function loadCMV(){
     }).join('');
   }catch(e){toast('Erro ao calcular CMV','err');}
 }
+
+// ══════════════════════════════════════════════════════════════
+// SPRINT 2 — PEDIDOS DE COMPRA
+// ══════════════════════════════════════════════════════════════
+function openPedidoModal(){
+  if(!listaComprasData.length){toast('Gere uma lista de compras primeiro','err');return;}
+  document.getElementById('ped-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('ped-num').value='';
+  document.getElementById('ped-forn').value='';
+  document.getElementById('ped-obs').value='';
+  const total=listaComprasData.reduce(function(s,i){return s+(i.qtdComprar*(i.ultimoCusto||0));},0);
+  document.getElementById('ped-resumo').innerHTML=`<strong>${listaComprasData.length}</strong> itens | Total estimado: <strong>${fmtR$(total)}</strong>`;
+  document.getElementById('pedido-modal').classList.add('show');
+}
+function closePedidoModal(){document.getElementById('pedido-modal').classList.remove('show');}
+
+async function salvarPedido(){
+  const itens=listaComprasData.map(function(s){return{produto:s.produto,categoria:s.categoria,unidade:s.unidade||'',qtdComprar:s.qtdComprar,ultimoCusto:s.ultimoCusto||0};});
+  const r=await api({acao:'gerarPedido',token:getToken(),
+    numero:v('ped-num'),data:document.getElementById('ped-data').value,
+    fornecedor:v('ped-forn'),observacoes:v('ped-obs'),itens:JSON.stringify(itens)});
+  if(r.status==='ok'){toast('✅ Pedido #'+r.numero+' gerado!','ok');closePedidoModal();}
+  else toast('Erro: '+r.message,'err');
+}
+
+async function exportPedidoPDF(){
+  if(!window.jspdf){toast('Biblioteca PDF não carregada','err');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const num=v('ped-num')||'RASCUNHO';
+  const forn=v('ped-forn')||'—';
+  const dataP=document.getElementById('ped-data').value||new Date().toLocaleDateString('pt-BR');
+  doc.setFontSize(16);doc.setFont('helvetica','bold');
+  doc.text('PEDIDO DE COMPRA #'+num,14,20);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');
+  doc.text('Fornecedor: '+forn,14,30);
+  doc.text('Data: '+dataP,14,36);
+  doc.text('Observações: '+(v('ped-obs')||'—'),14,42);
+  const total=listaComprasData.reduce(function(s,i){return s+(i.qtdComprar*(i.ultimoCusto||0));},0);
+  const rows=listaComprasData.map(function(i){return[i.produto,i.categoria,i.unidade||'',i.qtdComprar.toString(),i.ultimoCusto?fmtR$(i.ultimoCusto):'—',i.ultimoCusto?fmtR$(i.qtdComprar*i.ultimoCusto):'—'];});
+  doc.autoTable({head:[['Produto','Categoria','Un.','Qtd','Unit.','Total']],body:rows,startY:50});
+  const finalY=doc.lastAutoTable.finalY+8;
+  doc.setFont('helvetica','bold');
+  doc.text('Total Estimado: '+fmtR$(total),14,finalY);
+  doc.text('Status: ABERTO',14,finalY+6);
+  doc.save('pedido_'+num+'.pdf');
+  toast('✅ PDF gerado!','ok');
+}
+
+async function loadPedidos(){
+  const status=document.getElementById('ped-filter-status')?.value||'';
+  const r=await api({acao:'getPedidos',token:getToken(),...(status?{status}:{})});
+  const body=document.getElementById('pedidos-body');
+  if(!r.pedidos?.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--tl)">Nenhum pedido encontrado</td></tr>';return;}
+  const stCls={'ABERTO':'st-aberto','ENVIADO':'st-enviado','PARCIALMENTE RECEBIDO':'st-parcial','RECEBIDO':'st-recebido','CANCELADO':'st-cancelado'};
+  body.innerHTML=r.pedidos.map(function(p){
+    const itens=p.itens||[];
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700">${p.numero}</td>
+      <td style="font-size:11px">${p.data||'—'}</td>
+      <td>${p.fornecedor||'—'}</td>
+      <td style="color:var(--tl);font-size:11px">${itens.length} itens</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${fmtR$(p.total||0)}</td>
+      <td><span class="st-badge ${stCls[p.status]||'st-aberto'}">${p.status}</span></td>
+      <td>
+        <select onchange="updatePedidoStatus('${p.id}',this.value)" style="background:var(--s2);border:1px solid var(--b1);border-radius:5px;padding:3px 6px;color:var(--tx);font-size:10px;outline:none">
+          ${['ABERTO','ENVIADO','PARCIALMENTE RECEBIDO','RECEBIDO','CANCELADO'].map(function(s){return`<option ${s===p.status?'selected':''}>${s}</option>`;}).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function updatePedidoStatus(id,status){
+  const r=await api({acao:'updatePedido',token:getToken(),id,status});
+  if(r.status==='ok') toast('✅ Status atualizado','ok');
+  else toast('Erro: '+r.message,'err');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPRINT 2 — NF-e XML PARSING
+// ══════════════════════════════════════════════════════════════
+function parseNFeXML(xmlContent){
+  try{
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(xmlContent,'text/xml');
+    const get=(parent,tag)=>{const el=parent.querySelector(tag)||parent.getElementsByTagName(tag)[0];return el?el.textContent.trim():'';};
+    const infNFe=doc.querySelector('infNFe')||doc.getElementsByTagName('infNFe')[0];
+    if(!infNFe)return null;
+    const chave=(infNFe.getAttribute('Id')||'').replace('NFe','');
+    const emit=doc.querySelector('emit')||doc.getElementsByTagName('emit')[0];
+    const ide=doc.querySelector('ide')||doc.getElementsByTagName('ide')[0];
+    const fornecedor=emit?get(emit,'xNome'):'';
+    const cnpj=emit?get(emit,'CNPJ'):'';
+    const dataEmissao=(get(doc,'dhEmi')||get(doc,'dEmi')||'').split('T')[0];
+    const valorTotal=parseFloat(get(doc,'vNF').replace(',','.'))||0;
+    // Forma de pagamento
+    const tPag=get(doc,'tPag');
+    const formas={'01':'Dinheiro','02':'Cheque','03':'Cartão de Crédito','04':'Cartão de Débito','10':'Vale Alimentação','15':'Boleto','17':'PIX','99':'Outros'};
+    const formaPagamento=formas[tPag]||tPag||'';
+    // Vencimentos
+    const dups=[...doc.querySelectorAll('dup'),...doc.getElementsByTagName('dup')];
+    const vencimentos=dups.map(function(d){return{nDup:get(d,'nDup'),dVenc:get(d,'dVenc'),vDup:parseFloat(get(d,'vDup').replace(',','.'))||0};});
+    // Itens
+    const dets=[...new Set([...doc.querySelectorAll('det'),...doc.getElementsByTagName('det')])];
+    const itens=dets.map(function(det){
+      const prod=det.querySelector('prod')||det.getElementsByTagName('prod')[0];
+      if(!prod)return null;
+      return{nomeProdNF:get(prod,'xProd'),quantidade:parseFloat(get(prod,'qCom').replace(',','.'))||0,unidade:get(prod,'uCom'),valorUnitario:parseFloat(get(prod,'vUnCom').replace(',','.'))||0,valorTotal:parseFloat(get(prod,'vProd').replace(',','.'))||0,ncm:get(prod,'NCM'),cfop:get(prod,'CFOP')};
+    }).filter(Boolean);
+    return{chave,fornecedor,cnpj,dataEmissao,valorTotal,formaPagamento,vencimentos,itens};
+  }catch(e){return null;}
+}
+
+// Atualiza o initNF para aceitar XML
+const _origInitNF=initNF;
+async function initNF(){
+  await _origInitNF();
+  // Adiciona suporte a XML no input de arquivo
+  document.getElementById('nf-file').accept='image/*,.pdf,.xml,text/xml';
+}
+
+const _origProcessNFFile=processNFFile;
+async function processNFFile(file){
+  if(file.name?.endsWith('.xml')||file.type==='text/xml'||file.type==='application/xml'){
+    document.getElementById('ocr-progress').style.display='flex';
+    document.getElementById('ocr-msg').textContent='Lendo XML NF-e...';
+    try{
+      const text=await file.text();
+      const dados=parseNFeXML(text);
+      if(!dados){toast('XML inválido ou não reconhecido como NF-e','err');document.getElementById('ocr-progress').style.display='none';return;}
+      // Verifica duplicata
+      const dup=await api({acao:'checkNFeDuplicata',token:getToken(),chave_nfe:dados.chave});
+      if(dup.duplicata){
+        toast('⚠️ NF-e já lançada em '+dup.data+' ('+dup.fornecedor+')','err');
+        document.getElementById('ocr-progress').style.display='none';
+        return;
+      }
+      // Preenche dados
+      document.getElementById('nf-fornecedor').value=dados.fornecedor||'';
+      document.getElementById('nf-doc').value=dados.chave?'NF '+dados.chave.slice(-9):'';
+      if(dados.dataEmissao) document.getElementById('nf-data').value=dados.dataEmissao;
+      // Armazena chave para uso posterior
+      document.getElementById('nf-file').dataset.chave=dados.chave;
+      document.getElementById('nf-file').dataset.formaPag=dados.formaPagamento||'';
+      document.getElementById('nf-file').dataset.vencimento=dados.vencimentos?.[0]?.dVenc||'';
+      // Popula itens
+      nfItens=[];
+      dados.itens.forEach(function(item){
+        const prodCadastrado=associarProdutoNF(item.nomeProdNF);
+        let cat='';
+        if(prodCadastrado){for(const[c,items]of Object.entries(DADOS)){if(Object.keys(items).some(i=>i===prodCadastrado)){cat=c;break;}}}
+        addNFItem(prodCadastrado||item.nomeProdNF,cat,item.quantidade,item.valorUnitario,item.valorTotal);
+      });
+      renderNFTable();
+      toast('✅ NF-e lida: '+dados.itens.length+' itens | '+dados.fornecedor,'ok');
+      // Salva documento fiscal
+      api({acao:'saveDocFiscal',token:getToken(),tipo:'NFe',chave_nfe:dados.chave,fornecedor:dados.fornecedor,cnpj:dados.cnpj,data_emissao:dados.dataEmissao,valor_total:dados.valorTotal,num_doc:dados.chave?.slice(-9)||''});
+    }catch(e){toast('Erro ao ler XML: '+e.message,'err');}
+    document.getElementById('ocr-progress').style.display='none';
+    return;
+  }
+  // Fallback para OCR (PDF/imagem)
+  await _origProcessNFFile(file);
+}
+
+function associarProdutoNF(nomeProdNF){
+  const upper=String(nomeProdNF).toUpperCase().trim();
+  // 1. Associação salva
+  for(const[nf,prod]of Object.entries(nfAssociacoes)){if(upper.includes(nf))return prod;}
+  // 2. Match exato nos produtos cadastrados
+  const allProd=Object.values(DADOS).flatMap(function(cat){return Object.keys(cat);});
+  const exact=allProd.find(function(p){return upper===p.toUpperCase();});
+  if(exact)return exact;
+  // 3. Match por 6+ caracteres consecutivos
+  const partial=allProd.find(function(p){const sub=p.toUpperCase().substring(0,Math.min(8,p.length));return upper.includes(sub);});
+  return partial||'';
+}
+
+// Atualiza saveNFEntrada para incluir chave NF-e e criar Conta a Pagar
+const _origSaveNF=saveNFEntrada;
+async function saveNFEntrada(){
+  const chave=document.getElementById('nf-file').dataset.chave||'';
+  const formaPag=document.getElementById('nf-file').dataset.formaPag||'';
+  const vencimento=document.getElementById('nf-file').dataset.vencimento||'';
+  const validos=nfItens.filter(function(it){return it.produto&&parseFloat(it.quantidade)>0;});
+  if(!validos.length){toast('Adicione pelo menos um item com produto e quantidade','err');return;}
+  const btn=document.getElementById('btn-save-nf');btn.disabled=true;btn.textContent='Salvando...';
+  const r=await api({acao:'saveEntrada',token:getToken(),
+    data:document.getElementById('nf-data').value,fornecedor:v('nf-fornecedor'),
+    documento:v('nf-doc'),chave_nfe:chave,forma_pagamento:formaPag,
+    vencimento:vencimento,criar_conta:vencimento?'true':'false',
+    itens:JSON.stringify(validos)});
+  if(r.status==='ok'){
+    toast('✅ '+r.message+(vencimento?' — Conta a pagar criada!':''),'ok');
+    nfItens=[];renderNFTable();
+    document.getElementById('nf-fornecedor').value='';
+    document.getElementById('nf-doc').value='';
+    document.getElementById('nf-file').dataset.chave='';
+    if(vencimento) toast('💳 Conta a pagar vencendo em '+vencimento+' criada automaticamente','ok');
+  } else toast('Erro: '+r.message,'err');
+  btn.disabled=false;btn.textContent='✅ Registrar Entrada';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPRINT 2 — CONTAS A PAGAR
+// ══════════════════════════════════════════════════════════════
+async function loadContasPagar(){
+  const status=document.getElementById('cp-status')?.value||'';
+  const fornecedor=v('cp-forn');
+  const r=await api({acao:'getContasPagar',token:getToken(),...(status?{status}:{}),...(fornecedor?{fornecedor}:{})});
+  document.getElementById('cp-aberto').textContent=fmtR$(r.totalAberto||0);
+  document.getElementById('cp-vencido').textContent=fmtR$(r.totalVencido||0);
+  const body=document.getElementById('cpagar-body');
+  if(!r.contas?.length){body.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--tl)">Nenhuma conta encontrada</td></tr>';return;}
+  const stCls={'ABERTO':'st-aberto','VENCIDO':'st-vencido','PAGO':'st-pago','PARCIAL':'st-parcial','CANCELADO':'st-cancelado'};
+  body.innerHTML=r.contas.map(function(c){
+    const isVencida=c.status==='VENCIDO';
+    return `<tr style="${isVencida?'background:rgba(244,63,94,.03)':''}">
+      <td style="font-weight:600">${c.fornecedor||'—'}</td>
+      <td style="font-size:10px;color:var(--tl)">${c.documento||'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${fmtR$(c.valor||0)}</td>
+      <td style="font-size:11px">${c.emissao||'—'}</td>
+      <td style="font-size:11px;${isVencida?'color:var(--er);font-weight:700':''}">${c.vencimento||'—'}</td>
+      <td style="font-size:10px;color:var(--tl)">${c.forma_pagamento||'—'}</td>
+      <td><span class="st-badge ${stCls[c.status]||'st-aberto'}">${c.status||'ABERTO'}</span></td>
+      <td style="display:flex;gap:4px">
+        ${c.status!=='PAGO'&&c.status!=='CANCELADO'?`<button class="btn-act" onclick="openPagModal('${c.id}','${c.valor}')">✅ Pagar</button>`:''}
+        <button class="btn-act" onclick="editConta('${c.id}')">✏️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openContaModal(conta=null){
+  document.getElementById('conta-id').value=conta?.id||'';
+  document.getElementById('conta-forn').value=conta?.fornecedor||'';
+  document.getElementById('conta-doc').value=conta?.documento||'';
+  document.getElementById('conta-valor').value=conta?.valor||'';
+  document.getElementById('conta-forma').value=conta?.forma_pagamento||'Boleto';
+  document.getElementById('conta-emissao').value=conta?.emissao||new Date().toISOString().split('T')[0];
+  document.getElementById('conta-venc').value=conta?.vencimento||'';
+  document.getElementById('conta-modal').classList.add('show');
+}
+function closeContaModal(){document.getElementById('conta-modal').classList.remove('show');}
+function editConta(id){
+  // busca nos dados já carregados
+  const rows=[...document.querySelectorAll('#cpagar-body tr')];
+  openContaModal({id});
+}
+async function saveConta(){
+  const id=document.getElementById('conta-id').value;
+  const params={acao:'saveContaPagar',token:getToken(),
+    ...(id?{id}:{}),
+    fornecedor:v('conta-forn'),documento:v('conta-doc'),
+    valor:document.getElementById('conta-valor').value,
+    forma_pagamento:document.getElementById('conta-forma').value,
+    emissao:document.getElementById('conta-emissao').value,
+    vencimento:document.getElementById('conta-venc').value};
+  const r=await api(params);
+  if(r.status==='ok'){toast('✅ Conta salva!','ok');closeContaModal();loadContasPagar();}
+  else toast('Erro: '+r.message,'err');
+}
+
+function openPagModal(id,valor){
+  document.getElementById('pag-conta-id').value=id;
+  document.getElementById('pag-valor').value=valor||'';
+  document.getElementById('pag-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('pag-obs').value='';
+  document.getElementById('pag-parcial').checked=false;
+  document.getElementById('pag-modal').classList.add('show');
+}
+async function confirmarPagamento(){
+  const id=document.getElementById('pag-conta-id').value;
+  const parcial=document.getElementById('pag-parcial').checked;
+  const r=await api({acao:'pagarConta',token:getToken(),id,
+    valor_pago:document.getElementById('pag-valor').value,
+    data_pag:document.getElementById('pag-data').value,
+    obs:v('pag-obs'),parcial:parcial?'true':'false'});
+  if(r.status==='ok'){toast('✅ Pagamento registrado!','ok');document.getElementById('pag-modal').classList.remove('show');loadContasPagar();}
+  else toast('Erro: '+r.message,'err');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPRINT 2 — PAINEL FINANCEIRO
+// ══════════════════════════════════════════════════════════════
+async function loadFinanceiro(){
+  try{
+    const r=await api({acao:'getFinanceiro',token:getToken()});
+    document.getElementById('fin-mes-label').textContent='Período: '+r.mes;
+    document.getElementById('fin-cards').innerHTML=`
+      <div class="fin-card"><div class="fin-card-lbl">🛒 Compras do Mês</div><div class="fin-card-val" style="color:var(--ac)">${fmtR$(r.comprasMes||0)}</div></div>
+      <div class="fin-card"><div class="fin-card-lbl">📦 Valor em Estoque</div><div class="fin-card-val" style="color:var(--ok)">${fmtR$(r.totalEstoque||0)}</div></div>
+      <div class="fin-card"><div class="fin-card-lbl">💳 Contas em Aberto</div><div class="fin-card-val" style="color:var(--wn)">${fmtR$(r.totalAberto||0)}</div></div>
+      <div class="fin-card" style="border-color:rgba(244,63,94,.3)"><div class="fin-card-lbl">⚠️ Contas Vencidas</div><div class="fin-card-val" style="color:var(--er)">${fmtR$(r.totalVencido||0)}</div></div>
+      <div class="fin-card"><div class="fin-card-lbl">✅ Pago no Mês</div><div class="fin-card-val" style="color:var(--ok)">${fmtR$(r.totalPagoMes||0)}</div></div>
+      <div class="fin-card" style="border-color:rgba(14,165,233,.2)"><div class="fin-card-lbl">📊 Saldo Estimado</div><div class="fin-card-val" style="color:var(--ac)">${fmtR$((r.totalEstoque||0)-(r.totalAberto||0))}</div></div>`;
+    // Contas vencidas
+    if(r.totalVencido>0){
+      const rv=await api({acao:'getContasPagar',token:getToken(),status:'VENCIDO'});
+      const body=document.getElementById('fin-venc-body');
+      if(rv.contas?.length){
+        body.innerHTML=rv.contas.map(function(c){return`<tr>
+          <td style="font-weight:600">${c.fornecedor}</td><td style="font-size:10px">${c.documento||'—'}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:var(--er);font-weight:700">${fmtR$(c.valor||0)}</td>
+          <td style="color:var(--er);font-size:11px">${c.vencimento}</td>
+          <td><button class="btn-act" onclick="openPagModal('${c.id}','${c.valor}')">✅ Pagar</button></td>
+        </tr>`;}).join('');
+      }
+    }
+  }catch(e){toast('Erro ao carregar financeiro','err');}
+}
+
+// Responsivo fin-grid
+document.head.insertAdjacentHTML('beforeend','<style>@media(max-width:767px){.fin-grid{grid-template-columns:1fr 1fr!important;}}@media(max-width:479px){.fin-grid{grid-template-columns:1fr!important;}}</style>');
 
 window.addEventListener('load',async()=>{
   // Link de reset de senha via URL
