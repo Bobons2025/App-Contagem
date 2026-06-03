@@ -762,12 +762,13 @@ async function doSetup(){
   err.style.display='none';
   if(!nome||!email||!usuario||!senha){err.textContent='Preencha todos os campos.';err.style.display='block';return;}
   if(senha!==confirma){err.textContent='As senhas não coincidem.';err.style.display='block';return;}
-  if(senha.length<8){err.textContent='Senha deve ter mínimo 8 caracteres.';err.style.display='block';return;}
+  if(senha.length<6){err.textContent='Senha deve ter mínimo 6 caracteres.';err.style.display='block';return;}
   const btn=document.getElementById('btn-setup');
   setLoading(btn,true);
   try{
+    // Senha enviada diretamente — o hash é feito no servidor (Apps Script)
     const r=await api({acao:'setup',nome,email,usuario,senha});
-    if(r.status==='ok'){toast('✅ Administrador criado! Faça login.','ok');showScreen('sc-login');}
+    if(r.status==='ok'){toast('Administrador criado! Faça login.','ok');showScreen('sc-login');}
     else{err.textContent=r.message||'Erro desconhecido.';err.style.display='block';}
   }catch(e){err.textContent=e.message;err.style.display='block';}
   setLoading(btn,false);
@@ -779,11 +780,12 @@ async function doLogin(){
   err.style.display='none';
   if(!login||!senha){err.textContent='Preencha login e senha.';err.style.display='block';return;}
   const btn=document.getElementById('btn-login');
-  setLoading(btn,true);btn.textContent;
+  setLoading(btn,true);
   try{
+    // Senha enviada diretamente — o hash é feito no servidor (Apps Script)
     const r=await api({acao:'login',login,senha});
     if(r.status==='ok'){
-      setSession(r.user, r.token);
+      setSession(r.user,r.token);
       showScreen(null);
       initApp();
     } else {
@@ -830,6 +832,7 @@ async function doReset(){
   const btn=document.getElementById('btn-reset');
   setLoading(btn,true);
   try{
+    // Senha enviada diretamente — hash feito no servidor
     const r=await api({acao:'resetPassword',token,novaSenha:pw});
     if(r.status==='ok'){ok.textContent=r.message;ok.style.display='block';setTimeout(()=>showScreen('sc-login'),2500);}
     else{err.textContent=r.message;err.style.display='block';}
@@ -1303,7 +1306,8 @@ async function saveUsr(){
   const btn=document.getElementById('um-save');
   btn.disabled=true;
   try{
-    const params=isNew
+    // Senha enviada diretamente — hash feito no servidor
+  const params=isNew
       ?{acao:'createUser',token:getToken(),nome,email,usuario,senha,perfil}
       :{acao:'updateUser',token:getToken(),userId:id,nome,email,usuario,perfil,status,...(senha?{novaSenha:senha}:{})};
     const r=await api(params);
