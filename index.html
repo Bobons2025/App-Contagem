@@ -331,6 +331,23 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 /* ── CAT GRID (contagem) ── */
 .cat-grid-wrap{padding:10px 32px 80px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
 
+/* ── PROGRESS SEMANA ── */
+.week-prog{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 20px;margin:14px 0;}
+.week-prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.week-prog-label{font-size:12px;font-weight:700;color:var(--tm);}
+.week-prog-nums{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tl);}
+.week-prog-bar{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+.week-prog-fill{height:100%;border-radius:4px;transition:width .6s ease;background:linear-gradient(90deg,var(--ac),var(--grn));}
+.week-prog-fill.pend{background:linear-gradient(90deg,var(--ora),var(--wn));}
+.week-prog-stats{display:flex;gap:16px;font-size:11px;color:var(--tl);flex-wrap:wrap;}
+.week-prog-stat span{font-weight:700;color:var(--tx);}
+.week-pend-items{margin-top:12px;padding-top:12px;border-top:1px solid var(--b1);}
+.week-pend-title{font-size:11px;font-weight:700;color:var(--wn);margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.week-pend-list{display:flex;flex-wrap:wrap;gap:5px;max-height:120px;overflow:hidden;transition:max-height .3s;}
+.week-pend-list.expanded{max-height:600px;}
+.week-pend-chip{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:5px;padding:2px 8px;font-size:10px;color:var(--wn);}
+.pct-badge{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;}
+
 /* ── RESPONSIVE ── */
 @media(min-width:1024px){
   .stat-grid{grid-template-columns:repeat(4,1fr);}
@@ -516,6 +533,26 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
               <div class="week-banner-sub" id="wb-sub"></div>
             </div>
           </div>
+          <!-- Barra de progresso da semana -->
+          <div class="week-prog" id="week-prog" style="display:none">
+            <div class="week-prog-top">
+              <div class="week-prog-label">📊 Progresso da semana</div>
+              <div class="pct-badge" id="prog-pct">0%</div>
+            </div>
+            <div class="week-prog-bar"><div class="week-prog-fill" id="prog-fill" style="width:0%"></div></div>
+            <div class="week-prog-stats">
+              <div>Total: <span id="prog-total">—</span> itens</div>
+              <div>✅ Preenchidos: <span id="prog-preen" style="color:var(--ok)">—</span></div>
+              <div>⚠️ Pendentes: <span id="prog-pend-n" style="color:var(--wn)">—</span></div>
+            </div>
+            <div class="week-pend-items" id="prog-pend-block" style="display:none">
+              <div class="week-pend-title" onclick="document.getElementById('prog-pend-list').classList.toggle('expanded')">
+                ⚠️ <span id="prog-pend-label">Itens sem contagem</span> <span style="font-size:9px;color:var(--tl)">(clique para expandir)</span>
+              </div>
+              <div class="week-pend-list" id="prog-pend-list"></div>
+            </div>
+          </div>
+
           <div class="stat-grid">
             <div class="stat-card" style="--cc:var(--ac)"><div class="stat-icon">📦</div><div class="stat-val">6</div><div class="stat-lbl">Categorias</div></div>
             <div class="stat-card" style="--cc:var(--wn)"><div class="stat-icon">📋</div><div class="stat-val" id="d-pend">—</div><div class="stat-lbl">Categorias pendentes</div></div>
@@ -931,18 +968,44 @@ async function loadDash(){
     const r=await api({acao:'getDashboard',token:getToken()});
     if(r.status!=='ok') return;
     const done=r.semanaConcluida;
+    const pct=r.percentual||0;
+    const preen=r.preenchidos||0;
+    const pend=r.pendentes||0;
+    const total=r.totalItens||0;
+    // Banner semana
     const wb=document.getElementById('week-banner');
     wb.className='week-banner '+(done?'done':'pend');
     wb.querySelector('.week-banner-icon').textContent=done?'✅':'⚠️';
     document.getElementById('wb-title').textContent=done?'✅ Contagem da Semana Concluída':'⚠️ Contagem da Semana Pendente';
-    document.getElementById('wb-sub').textContent=done?'Todas as categorias contadas — semana de '+r.semana:r.totalConcluidas+' de '+r.totalCats+' categorias — semana de '+r.semana;
+    document.getElementById('wb-sub').textContent=done
+      ?`${preen} de ${total} itens contados (100%) — semana de ${r.semana}`
+      :`${preen} de ${total} itens contados (${pct}%) — semana de ${r.semana}`;
+    // Barra de progresso
+    const progEl=document.getElementById('week-prog');
+    if(total>0){
+      progEl.style.display='block';
+      const fill=document.getElementById('prog-fill');
+      fill.style.width=pct+'%';
+      fill.className='week-prog-fill'+(done?'':' pend');
+      document.getElementById('prog-pct').textContent=pct+'%';
+      document.getElementById('prog-total').textContent=total;
+      document.getElementById('prog-preen').textContent=preen;
+      document.getElementById('prog-pend-n').textContent=pend;
+      // Itens pendentes
+      const pendBlock=document.getElementById('prog-pend-block');
+      if(pend>0&&r.itensPendentes&&r.itensPendentes.length){
+        pendBlock.style.display='block';
+        document.getElementById('prog-pend-label').textContent=`${pend} itens sem contagem`;
+        document.getElementById('prog-pend-list').innerHTML=r.itensPendentes.map(p=>`<span class="week-pend-chip">${p.cat}: ${p.item}</span>`).join('');
+      } else { pendBlock.style.display='none'; }
+    }
+    // Stats cards
     document.getElementById('d-pend').textContent=r.totalCats-r.totalConcluidas;
     document.getElementById('d-conc').textContent=r.totalConcluidas;
     if(isAdmin()&&r.totalUsuarios!==undefined) document.getElementById('d-users').textContent=r.totalUsuarios;
     // Sidebar status
     document.getElementById('sb-status').textContent=done?'✅ Concluída':'⚠️ Pendente';
     document.getElementById('sb-status').className='sb-status '+(done?'done':'pend');
-    // Garante cards admin visíveis
     if(isAdmin()) document.querySelectorAll('.admin-c').forEach(function(el){el.style.display='block';});
     // Cat cards
     document.getElementById('dash-cats').innerHTML=CATS.map(cat=>{
@@ -1019,10 +1082,12 @@ function selLocal(loc){
 function buildItems(){
   const cont=getCont(),catC=cont[curCat]||{},mc=curLocal;
   document.getElementById('items-list').innerHTML=Object.entries(DADOS[curCat]).map(([item,med])=>{
-    const vals=catC[item]||{},val=mc==='s'?(vals.s||''):(vals.e||'');
-    const out=mc==='s'?'e':'s',outV=vals[out]||0;
+    const vals=catC[item]||{};
+    // 0 é valor válido — distingue de "não preenchido" (undefined)
+    const val=mc==='s'?(vals.s!==undefined?vals.s:''):(vals.e!==undefined?vals.e:'');
+    const out=mc==='s'?'e':'s',outV=vals[out]!==undefined?vals[out]:0;
     const tot=(parseFloat(val)||0)+outV;
-    const filled=val!==''&&Number(val)>0;
+    const filled=val!=='';
     const sid='r-'+item.replace(/[^a-zA-Z0-9]/g,'_');
     return `<div class="item-row ${filled?'filled '+mc:''}" id="${sid}">
       <div class="item-info">
@@ -1050,19 +1115,30 @@ function onKD(e,inp){
 
 function onInp(inp){
   const raw=inp.value.replace(',','.');
-  const item=inp.dataset.item,val=parseFloat(raw)||0;
+  const item=inp.dataset.item;
   const c=getCont();
   if(!c[curCat]) c[curCat]={};
   if(!c[curCat][item]) c[curCat][item]={};
-  c[curCat][item][curLocal]=val;
+  if(raw===''||raw===null){
+    delete c[curCat][item][curLocal]; // campo vazio = não preenchido
+  } else {
+    const val=parseFloat(raw);
+    if(!isNaN(val)) c[curCat][item][curLocal]=val; // inclui 0
+  }
   saveCont(c);
   const sid='r-'+item.replace(/[^a-zA-Z0-9]/g,'_');
   const row=document.getElementById(sid);
   if(row){
-    row.className='item-row '+(val>0?'filled '+curLocal:'');
-    const out=curLocal==='s'?'e':'s',outV=c[curCat][item][out]||0;
+    const filled=c[curCat][item][curLocal]!==undefined;
+    row.className='item-row '+(filled?'filled '+curLocal:'');
+    const out=curLocal==='s'?'e':'s';
+    const outV=c[curCat][item][out]!==undefined?c[curCat][item][out]:0;
+    const curVal=c[curCat][item][curLocal]!==undefined?c[curCat][item][curLocal]:0;
     let te=row.querySelector('.item-tot');
-    if(outV>0){if(!te){te=document.createElement('div');te.className='item-tot';row.querySelector('.item-right').appendChild(te);}te.textContent='Total: '+((val+outV)>0?val+outV:'—');}
+    if(outV>0){
+      if(!te){te=document.createElement('div');te.className='item-tot';row.querySelector('.item-right').appendChild(te);}
+      te.textContent='Total: '+(curVal+outV);
+    }
   }
   updateFloat();
 }
@@ -1070,21 +1146,31 @@ function onInp(inp){
 function updateFloat(){
   const c=getCont(),catC=c[curCat]||{},total=Object.keys(DADOS[curCat]).length;
   let cnt=0;
-  Object.keys(DADOS[curCat]).forEach(item=>{if((catC[item]?.[curLocal]||0)>0) cnt++;});
+  // Conta itens com valor explícito (inclui 0)
+  Object.keys(DADOS[curCat]).forEach(item=>{if(catC[item]?.[curLocal]!==undefined) cnt++;});
   document.getElementById('float-num').textContent=cnt;
   document.getElementById('fbar-fill').style.width=(total>0?cnt/total*100:0)+'%';
 }
 
 async function enviar(){
   const c=getCont(),catC=c[curCat]||{};
-  const itens=Object.keys(DADOS[curCat]).filter(item=>(catC[item]?.[curLocal]||0)>0);
-  if(!itens.length){toast('Preencha pelo menos um item','err');return;}
+  // Inclui itens com valor explícito — 0 é válido
+  const itens=Object.keys(DADOS[curCat]).filter(item=>catC[item]?.[curLocal]!==undefined);
+  if(!itens.length){toast('Preencha pelo menos um item (use 0 para estoque zerado)','err');return;}
+  // Avisa sobre itens não preenchidos nesta categoria
+  const naoPreench=Object.keys(DADOS[curCat]).filter(item=>catC[item]?.[curLocal]===undefined);
+  if(naoPreench.length>0){
+    const ok=confirm(`⚠️ ${naoPreench.length} item(ns) sem valor nesta categoria:\n\n${naoPreench.slice(0,5).join('\n')}${naoPreench.length>5?'\n...e mais '+(naoPreench.length-5):''}.\n\nUse 0 para estoque zerado.\n\nEnviar mesmo assim?`);
+    if(!ok) return;
+  }
   const btn=document.getElementById('btn-send');
   btn.disabled=true;btn.classList.add('loading');
   const seg=getMonday();
   const payload=itens.map(item=>{
     const vals=catC[item]||{};
-    return{categoria:curCat,item,medida:DADOS[curCat][item],salao:vals.s||0,estoque:vals.e||0,total:(vals.s||0)+(vals.e||0),dataContagem:seg};
+    const s=vals.s!==undefined?vals.s:0;
+    const e=vals.e!==undefined?vals.e:0;
+    return{categoria:curCat,item,medida:DADOS[curCat][item],salao:s,estoque:e,total:s+e,dataContagem:seg};
   });
   try{
     const r=await api({acao:'saveCount',token:getToken(),dados:JSON.stringify(payload)});
