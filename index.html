@@ -328,10 +328,14 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
 .offline{background:rgba(249,115,22,.1);border-bottom:1px solid rgba(249,115,22,.2);color:var(--ora);font-size:11px;text-align:center;padding:6px;display:none;}
 .offline.show{display:block;}
 
+/* ── CAT GRID (contagem) ── */
+.cat-grid-wrap{padding:10px 32px 80px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+
 /* ── RESPONSIVE ── */
 @media(min-width:1024px){
   .stat-grid{grid-template-columns:repeat(4,1fr);}
   .cat-grid{grid-template-columns:repeat(3,1fr);}
+  .cat-grid-wrap{grid-template-columns:repeat(3,1fr);}
   .items-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;}
   .float-bar{left:var(--sw);}
 }
@@ -343,14 +347,39 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
   .tbl-hdr,.tbl-row{grid-template-columns:1.4fr 90px 80px 90px;}
   .tbl-hdr span:nth-child(2),.tbl-row>*:nth-child(2){display:none;}
 }
+/* ── TABLET ── */
+@media(max-width:767px){
+  .page-wrap{padding:20px 20px 80px;}
+  .step-hdr{padding:14px 20px;}
+  .mode-bar{padding:8px 20px;}
+  .items-list{padding:12px 20px;padding-bottom:96px;}
+  .cat-grid-wrap{padding:10px 20px 80px;}
+  .local-grid{padding:20px 20px;}
+  .cor-cat-grid{grid-template-columns:repeat(3,1fr);}
+  .cor-2col{grid-template-columns:1fr;}
+  .res-date-row{flex-wrap:wrap;}
+  .audit-filters{gap:6px;}
+  .af-btn{font-size:10px;padding:5px 9px;}
+}
+/* ── PHONE ── */
 @media(max-width:479px){
   :root{--hh:54px;}
-  .page-wrap{padding:16px 16px 80px;}
-  .step-hdr,.mode-bar{padding-left:16px;padding-right:16px;}
-  .items-list,.local-grid{padding-left:16px;padding-right:16px;}
+  .page-wrap{padding:14px 14px 80px;}
+  .step-hdr,.mode-bar{padding-left:14px;padding-right:14px;}
+  .items-list{padding:10px 14px;padding-bottom:96px;}
+  .cat-grid-wrap{padding:10px 14px 80px;grid-template-columns:repeat(2,1fr);}
+  .local-grid{padding:20px 14px;grid-template-columns:1fr;max-width:300px;}
   .float-bar{padding:10px 14px;}
   .tbl-hdr,.tbl-row{grid-template-columns:1fr 80px 70px;}
   .tbl-hdr span:nth-child(3),.tbl-row>*:nth-child(3){display:none;}
+  .cor-cat-grid{grid-template-columns:repeat(2,1fr);}
+  .cor-2col{grid-template-columns:1fr;}
+  .topbar-logo{font-size:13px;}
+  .t-role{display:none;}
+  .btn-logout{font-size:10px;padding:4px 8px;}
+  .stat-val{font-size:20px;}
+  .dash-hi h1{font-size:18px;}
+  .res-total-val{font-size:22px;}
 }
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -505,7 +534,7 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg);color
           <div style="font-size:11px;color:var(--tl);margin-top:3px">Semana de <strong id="cont-label" style="color:var(--ac)"></strong></div>
         </div>
         <div id="cat-banner"></div>
-        <div style="padding:10px 32px 80px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="cat-grid"></div>
+        <div id="cat-grid" class="cat-grid-wrap"></div>
       </div>
 
       <!-- CONTAGEM: LOCAL -->
@@ -694,7 +723,7 @@ const DADOS = {
 };
 const CAT_ICONS = {'BEBIDAS':'🥤','COZINHA':'🍳','DESCARTAVEL':'🧻','HORTIFRUTI':'🥦','LIMPEZA':'🧹','PEIXES':'🐟'};
 const CATS = Object.keys(DADOS);
-const PERMS = {SUPER_ADMIN:['dash','cont','res','hist','cor','usr','aud'],ADMIN:['dash','cont','res','hist','cor','usr','aud'],USER:['cont']};
+const PERMS = {SUPER_ADMIN:['dash','cont','res','hist','cor','usr','aud'],ADMIN:['dash','cont','res','hist','cor','usr','aud'],USER:['dash','cont','hist']};
 
 // ──────────────────────────────────────────────
 // SESSION (somente identificação — sem senha)
@@ -850,9 +879,13 @@ function initApp(){
   var adminSec=document.getElementById('admin-sec');
   if(adminSec) adminSec.style.display=isAdmin()?'block':'none';
   document.querySelectorAll('.admin-c').forEach(function(el){el.style.display=isAdmin()?'block':'none';});
+  // Oculta nav items inacessíveis para o perfil atual
+  document.querySelectorAll('#sidebar .nav-item[id^="nav-"]').forEach(function(el){
+    var v=el.id.replace('nav-','');
+    el.style.display=can(v)?'':'none';
+  });
   document.getElementById('sb-week').textContent=getMonday();
-  var startView=can('dash')?'dash':'cont';
-  goTo(startView);
+  goTo(can('dash')?'dash':'cont');
 }
 
 function renderAppHeader(){
